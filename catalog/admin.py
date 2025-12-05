@@ -1,7 +1,8 @@
 from django.contrib import admin
+from django.utils import timezone
 from .models import (
     Category, Product, ProductVariant, 
-    ProductImage, Attribute, AttributeValue
+    ProductImage, Attribute, AttributeValue, Discount
 )
 
 
@@ -103,3 +104,53 @@ class AttributeValueAdmin(admin.ModelAdmin):
     list_display = ('variant', 'attribute', 'value')
     list_filter = ('attribute', 'variant__product')
     search_fields = ('variant__product__name', 'attribute__name', 'value')
+
+
+@admin.register(Discount)
+class DiscountAdmin(admin.ModelAdmin):
+    list_display = ('name', 'discount_type', 'value', 'apply_to', 'start_date', 'end_date', 'is_active', 'is_valid_now')
+    list_filter = ('discount_type', 'apply_to', 'is_active', 'start_date', 'end_date')
+    search_fields = ('name', 'description')
+    date_hierarchy = 'start_date'
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('name', 'description', 'is_active', 'priority')
+        }),
+        ('Параметры скидки', {
+            'fields': ('discount_type', 'value')
+        }),
+        ('Область применения', {
+            'fields': ('apply_to', 'category', 'product', 'variant'),
+            'description': 'Выберите тип применения и соответствующий объект'
+        }),
+        ('Период действия', {
+            'fields': ('start_date', 'end_date')
+        }),
+    )
+
+    def is_valid_now(self, obj):
+        """Показывает, активна ли скидка сейчас"""
+        if obj.is_valid():
+            return "✓ Активна"
+        now = timezone.now()
+        if now < obj.start_date:
+            return "⏳ Ещё не началась"
+        elif now > obj.end_date:
+            return "✗ Завершена"
+        return "✗ Неактивна"
+    is_valid_now.short_description = "Статус"
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        # Динамически скрываем поля в зависимости от apply_to
+        if obj:
+            if obj.apply_to == Discount.APPLY_TO_CATEGORY:
+                form.base_fields['product'].widget.attrs['style'] = 'display:none'
+                form.base_fields['variant'].widget.attrs['style'] = 'display:none'
+            elif obj.apply_to == Discount.APPLY_TO_PRODUCT:
+                form.base_fields['category'].widget.attrs['style'] = 'display:none'
+                form.base_fields['variant'].widget.attrs['style'] = 'display:none'
+            elif obj.apply_to == Discount.APPLY_TO_VARIANT:
+                form.base_fields['category'].widget.attrs['style'] = 'display:none'
+                form.base_fields['product'].widget.attrs['style'] = 'display:none'
+        return form
