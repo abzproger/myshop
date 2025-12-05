@@ -47,6 +47,10 @@
         color: #333;
         transition: all 0.3s ease;
     }
+    .category-link.category-child {
+        padding-left: 30px;
+        font-size: 0.95rem;
+    }
     .category-link:hover {
         background: #e9ecef;
         color: #667eea;
@@ -135,6 +139,14 @@
                             <i class="bi bi-folder"></i> {{ category.name }}
                         </a>
                     </li>
+                    {% for child in category.children.all %}
+                    <li>
+                        <a href="{% url 'catalog:catalog_by_category' child.slug %}" 
+                           class="category-link category-child {% if selected_category == child %}active{% endif %}">
+                            <i class="bi bi-chevron-right small"></i> {{ child.name }}
+                        </a>
+                    </li>
+                    {% endfor %}
                     {% endfor %}
                 </ul>
                 

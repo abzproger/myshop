@@ -47,7 +47,20 @@ def catalog(request, category_slug=None):
     selected_category = None
     if category_slug:
         selected_category = get_object_or_404(Category, slug=category_slug)
-        variants = variants.filter(product__category=selected_category)
+        # Находим все дочерние категории (многоуровнево), чтобы показывать товары
+        # как из выбранной категории, так и из её подкатегорий.
+        category_ids = [selected_category.id]
+        frontier = [selected_category.id]
+        while frontier:
+            children = list(
+                Category.objects.filter(parent_id__in=frontier).values_list("id", flat=True)
+            )
+            if not children:
+                break
+            category_ids.extend(children)
+            frontier = children
+
+        variants = variants.filter(product__category_id__in=category_ids)
     
     # Поиск
     search_query = request.GET.get('search', '')
