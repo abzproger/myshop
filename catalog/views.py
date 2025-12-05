@@ -94,43 +94,56 @@ def catalog(request, category_slug=None):
 
 
 def product_detail(request, product_slug):
-    """Детальная страница товара"""
+    """Детальная страница товара.
+
+    При наличии параметра ?variant=<id> делает этот вариант основным:
+    отображает его цену, характеристики и первое изображение.
+    """
     # Получаем товар
     product = get_object_or_404(Product, slug=product_slug, is_active=True)
-    
+
     # Получаем все активные варианты товара
     variants = product.variants.filter(is_active=True).prefetch_related('images', 'attributes')
-    
-    # Получаем все изображения (из всех вариантов)
-    all_images = []
-    for variant in variants:
-        variant_images = variant.images.all()
-        if variant_images:
-            all_images.extend(variant_images)
-    
-    # Если нет изображений, используем первое изображение первого варианта
-    main_image = all_images[0] if all_images else None
-    
-    # Получаем характеристики первого варианта (или любого активного)
-    attributes = None
+
+    # Определяем выбранный вариант (из query-параметра или первый по умолчанию)
+    selected_variant = None
+    variant_id = request.GET.get('variant')
     if variants.exists():
-        first_variant = variants.first()
-        attributes = AttributeValue.objects.filter(variant=first_variant).select_related('attribute')
-    
+        if variant_id:
+            selected_variant = variants.filter(pk=variant_id).first()
+        if selected_variant is None:
+            selected_variant = variants.first()
+
+    # Изображения ТОЛЬКО выбранного варианта
+    variant_images = []
+    main_image = None
+    if selected_variant:
+        variant_images = list(selected_variant.images.all())
+        if variant_images:
+            main_image = variant_images[0]
+
+    # Характеристики выбранного варианта
+    attributes = None
+    if selected_variant:
+        attributes = AttributeValue.objects.filter(
+            variant=selected_variant
+        ).select_related('attribute')
+
     # Похожие товары (из той же категории)
     related_products = ProductVariant.objects.filter(
         product__category=product.category,
         product__is_active=True,
         is_active=True
     ).exclude(product=product).select_related('product').prefetch_related('images')[:4]
-    
+
     context = {
         'product': product,
         'variants': variants,
-        'all_images': all_images,
+        'selected_variant': selected_variant,
+        'variant_images': variant_images,
         'main_image': main_image,
         'attributes': attributes,
         'related_products': related_products,
     }
-    
+
     return render(request, 'catalog/product_detail.html', context)

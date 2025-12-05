@@ -101,10 +101,10 @@
 <!-- Основная информация о товаре -->
 <section class="container mb-5">
     <div class="row">
-        <!-- Галерея изображений -->
+        <!-- Галерея изображений выбранного варианта -->
         <div class="col-lg-6 mb-4">
             <div class="product-gallery">
-                {% if all_images %}
+                {% if variant_images %}
                 <img id="mainImage" 
                      src="{{ main_image.image.url }}" 
                      alt="{{ product.name }}" 
@@ -112,7 +112,7 @@
                      onclick="openImageModal(this.src)">
                 
                 <div class="d-flex gap-2 flex-wrap">
-                    {% for image in all_images %}
+                    {% for image in variant_images %}
                     <img src="{{ image.image.url }}" 
                          alt="{{ product.name }}" 
                          class="thumbnail {% if forloop.first %}active{% endif %}"
@@ -138,8 +138,8 @@
                    class="badge bg-secondary text-decoration-none">
                     {{ product.category.name }}
                 </a>
-                {% if variants.first.sku %}
-                <span class="badge bg-info ms-2">Артикул: {{ variants.first.sku }}</span>
+                {% if selected_variant and selected_variant.sku %}
+                <span class="badge bg-info ms-2">Артикул: {{ selected_variant.sku }}</span>
                 {% endif %}
             </div>
             
@@ -153,8 +153,8 @@
             
             <!-- Цена -->
             <div class="price-section">
-                {% if variants.first %}
-                    {% with variant=variants.first %}
+                {% if selected_variant %}
+                    {% with variant=selected_variant %}
                     <div class="d-flex align-items-center mb-3">
                         {% if variant.get_price_with_discount < variant.get_base_price %}
                         <div>
@@ -189,12 +189,12 @@
                 <h5 class="mb-3">Доступные варианты</h5>
                 <div id="variantsList">
                     {% for variant in variants %}
-                    <div class="variant-card" 
+                    <div class="variant-card {% if selected_variant and selected_variant.id == variant.id %}selected{% endif %}" 
                          data-variant-id="{{ variant.id }}"
                          data-variant-price="{{ variant.get_price_with_discount|floatformat:0 }}"
                          data-variant-base-price="{{ variant.get_base_price|floatformat:0 }}"
                          data-variant-discount="{{ variant.get_discount_amount|floatformat:0 }}"
-                         onclick="selectVariant({{ variant.id }})">
+                         onclick="window.location.href='{% url "catalog:product_detail" product.slug %}?variant={{ variant.id }}'">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>{{ variant.name|default:variant.product.name }}</strong>
@@ -339,14 +339,6 @@ function changeMainImage(src, element) {
 function openImageModal(src) {
     document.getElementById('modalImage').src = src;
     new bootstrap.Modal(document.getElementById('imageModal')).show();
-}
-
-function selectVariant(variantId) {
-    document.querySelectorAll('.variant-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-    event.currentTarget.classList.add('selected');
-    // Здесь можно обновить цену и другую информацию
 }
 
 function addToCart() {
