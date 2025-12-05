@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Интернет-магазин мебели{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 30px;
+    }
+    .product-gallery {
+        position: sticky;
+        top: 20px;
+    }
+    .main-image {
+        width: 100%;
+        height: 500px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        cursor: pointer;
+    }
+    .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .thumbnail:hover {
+        border-color: #667eea;
+        transform: scale(1.05);
+    }
+    .thumbnail.active {
+        border-color: #667eea;
+    }
+    .price-section {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .variant-card {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .variant-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    }
+    .variant-card.selected {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+    .attribute-table {
+        width: 100%;
+    }
+    .attribute-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .attribute-table td:first-child {
+        font-weight: 600;
+        width: 40%;
+    }
+    .related-product-card {
+        transition: transform 0.3s ease;
+    }
+    .related-product-card:hover {
+        transform: translateY(-5px);
+    }
+    .breadcrumb-custom {
+        background: transparent;
+        padding: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="container mt-3">
+    <nav aria-label="breadcrumb" class="breadcrumb-custom">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:index' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'catalog:catalog' %}">Каталог</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'catalog:catalog_by_category' product.category.slug %}">{{ product.category.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Основная информация о товаре -->
+<section class="container mb-5">
+    <div class="row">
+        <!-- Галерея изображений -->
+        <div class="col-lg-6 mb-4">
+            <div class="product-gallery">
+                {% if all_images %}
+                <img id="mainImage" 
+                     src="{{ main_image.image.url }}" 
+                     alt="{{ product.name }}" 
+                     class="main-image"
+                     onclick="openImageModal(this.src)">
+                
+                <div class="d-flex gap-2 flex-wrap">
+                    {% for image in all_images %}
+                    <img src="{{ image.image.url }}" 
+                         alt="{{ product.name }}" 
+                         class="thumbnail {% if forloop.first %}active{% endif %}"
+                         onclick="changeMainImage(this.src, this)"
+                         data-full="{{ image.image.url }}">
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="main-image bg-light d-flex align-items-center justify-content-center">
+                    <i class="bi bi-image text-muted" style="font-size: 5rem;"></i>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Информация о товаре -->
+        <div class="col-lg-6">
+            <h1 class="mb-3">{{ product.name }}</h1>
+            
+            <!-- Категория и артикул -->
+            <div class="mb-3">
+                <a href="{% url 'catalog:catalog_by_category' product.category.slug %}" 
+                   class="badge bg-secondary text-decoration-none">
+                    {{ product.category.name }}
+                </a>
+                {% if variants.first.sku %}
+                <span class="badge bg-info ms-2">Артикул: {{ variants.first.sku }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- Описание -->
+            {% if product.description %}
+            <div class="mb-4">
+                <h5>Описание</h5>
+                <p class="text-muted">{{ product.description|linebreaks }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Цена -->
+            <div class="price-section">
+                {% if variants.first %}
+                    {% with variant=variants.first %}
+                    <div class="d-flex align-items-center mb-3">
+                        {% if variant.get_price_with_discount < variant.get_base_price %}
+                        <div>
+                            <span class="text-decoration-line-through text-muted h5 mb-0">
+                                {{ variant.get_base_price|floatformat:0 }} руб.
+                            </span>
+                            <span class="display-6 fw-bold text-danger ms-3">
+                                {{ variant.get_price_with_discount|floatformat:0 }} руб.
+                            </span>
+                        </div>
+                        {% else %}
+                        <span class="display-6 fw-bold">
+                            {{ variant.get_base_price|floatformat:0 }} руб.
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if variant.get_discount_amount > 0 %}
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-tag-fill"></i> 
+                        Ваша скидка: <strong>{{ variant.get_discount_amount|floatformat:0 }} руб.</strong>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                {% else %}
+                <span class="display-6 fw-bold">Цена по запросу</span>
+                {% endif %}
+            </div>
+            
+            <!-- Варианты товара -->
+            {% if variants.count > 1 %}
+            <div class="mb-4">
+                <h5 class="mb-3">Доступные варианты</h5>
+                <div id="variantsList">
+                    {% for variant in variants %}
+                    <div class="variant-card" 
+                         data-variant-id="{{ variant.id }}"
+                         data-variant-price="{{ variant.get_price_with_discount|floatformat:0 }}"
+                         data-variant-base-price="{{ variant.get_base_price|floatformat:0 }}"
+                         data-variant-discount="{{ variant.get_discount_amount|floatformat:0 }}"
+                         onclick="selectVariant({{ variant.id }})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ variant.name|default:variant.product.name }}</strong>
+                                {% if variant.size %}<span class="badge bg-secondary ms-2">{{ variant.size }}</span>{% endif %}
+                                {% if variant.color %}<span class="badge bg-secondary ms-2">{{ variant.color }}</span>{% endif %}
+                                {% if variant.sku %}<small class="text-muted d-block mt-1">SKU: {{ variant.sku }}</small>{% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if variant.get_price_with_discount < variant.get_base_price %}
+                                <div>
+                                    <span class="text-decoration-line-through text-muted small">{{ variant.get_base_price|floatformat:0 }} руб.</span>
+                                    <span class="fw-bold text-danger ms-2">{{ variant.get_price_with_discount|floatformat:0 }} руб.</span>
+                                </div>
+                                {% else %}
+                                <span class="fw-bold">{{ variant.get_base_price|floatformat:0 }} руб.</span>
+                                {% endif %}
+                                {% if variant.stock > 0 %}
+                                <small class="text-success d-block">В наличии ({{ variant.stock }} шт.)</small>
+                                {% else %}
+                                <small class="text-danger d-block">Нет в наличии</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Кнопки действий -->
+            <div class="d-grid gap-2 mb-4">
+                <button class="btn btn-primary btn-lg" onclick="addToCart()">
+                    <i class="bi bi-cart-plus"></i> Добавить в корзину
+                </button>
+                <button class="btn btn-outline-secondary">
+                    <i class="bi bi-heart"></i> В избранное
+                </button>
+            </div>
+            
+            <!-- Дополнительная информация -->
+            <div class="row g-3 text-center">
+                <div class="col-4">
+                    <i class="bi bi-truck text-primary" style="font-size: 1.5rem;"></i>
+                    <p class="small mb-0 mt-2">Быстрая доставка</p>
+                </div>
+                <div class="col-4">
+                    <i class="bi bi-shield-check text-success" style="font-size: 1.5rem;"></i>
+                    <p class="small mb-0 mt-2">Гарантия качества</p>
+                </div>
+                <div class="col-4">
+                    <i class="bi bi-arrow-repeat text-info" style="font-size: 1.5rem;"></i>
+                    <p class="small mb-0 mt-2">Возврат 14 дней</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Характеристики -->
+{% if attributes %}
+<section class="container mb-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <h3 class="mb-4">Характеристики</h3>
+            <div class="card">
+                <div class="card-body">
+                    <table class="attribute-table">
+                        {% for attr_value in attributes %}
+                        <tr>
+                            <td>{{ attr_value.attribute.name }}</td>
+                            <td>{{ attr_value.value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Похожие товары -->
+{% if related_products %}
+<section class="container mb-5">
+    <h3 class="mb-4">Похожие товары</h3>
+    <div class="row g-4">
+        {% for variant in related_products %}
+        <div class="col-md-6 col-lg-3">
+            <div class="card related-product-card h-100">
+                {% if variant.images.first %}
+                <img src="{{ variant.images.first.image.url }}" 
+                     class="card-img-top" 
+                     alt="{{ variant.product.name }}"
+                     style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <a href="{% url 'catalog:product_detail' variant.product.slug %}" class="text-decoration-none">
+                            {{ variant.product.name }}
+                        </a>
+                    </h6>
+                    <p class="card-text">
+                        <span class="fw-bold">{{ variant.get_price_with_discount|floatformat:0 }} руб.</span>
+                    </p>
+                    <a href="{% url 'catalog:product_detail' variant.product.slug %}" class="btn btn-sm btn-outline-primary w-100">
+                        Подробнее
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Модальное окно для изображения -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ product.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="{{ product.name }}" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeMainImage(src, element) {
+    document.getElementById('mainImage').src = src;
+    document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('active'));
+    element.classList.add('active');
+}
+
+function openImageModal(src) {
+    document.getElementById('modalImage').src = src;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+function selectVariant(variantId) {
+    document.querySelectorAll('.variant-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    // Здесь можно обновить цену и другую информацию
+}
+
+function addToCart() {
+    // Здесь будет логика добавления в корзину
+    alert('Товар добавлен в корзину!');
+}
+</script>
+{% endblock %}
+

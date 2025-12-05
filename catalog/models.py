@@ -1,12 +1,56 @@
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 from decimal import Decimal
+import os
 
 # Create your models here.
 def upload_to(instance, filename):
+    """Генерирует безопасный путь для загрузки файлов"""
     model_name = instance.__class__.__name__.lower()
-    dir_name = f'{instance}'
-    return f'{model_name}s/{dir_name}/{filename}'
+    
+    # Используем ID или slug для создания безопасного имени директории
+    if hasattr(instance, 'pk') and instance.pk:
+        # Если объект уже сохранен, используем ID
+        dir_name = str(instance.pk)
+    elif hasattr(instance, 'id') and instance.id:
+        # Альтернативная проверка ID
+        dir_name = str(instance.id)
+    elif hasattr(instance, 'variant') and instance.variant:
+        # Для ProductImage используем ID варианта товара
+        if hasattr(instance.variant, 'pk') and instance.variant.pk:
+            dir_name = str(instance.variant.pk)
+        elif hasattr(instance.variant, 'sku') and instance.variant.sku:
+            dir_name = slugify(instance.variant.sku) or 'temp'
+        else:
+            dir_name = 'temp'
+    elif hasattr(instance, 'slug') and instance.slug:
+        # Если есть slug, используем его (очищенный)
+        dir_name = slugify(instance.slug) or 'temp'
+    elif hasattr(instance, 'sku') and instance.sku:
+        # Для вариантов товара используем SKU
+        dir_name = slugify(instance.sku) or 'temp'
+    elif hasattr(instance, 'product') and instance.product:
+        # Для связанных объектов используем ID продукта
+        if hasattr(instance.product, 'pk') and instance.product.pk:
+            dir_name = str(instance.product.pk)
+        elif hasattr(instance.product, 'slug') and instance.product.slug:
+            dir_name = slugify(instance.product.slug) or 'temp'
+        else:
+            dir_name = 'temp'
+    else:
+        # В крайнем случае используем временное имя
+        import uuid
+        dir_name = str(uuid.uuid4())[:8]
+    
+    # Очищаем имя файла от недопустимых символов
+    filename = os.path.basename(filename)
+    # Сохраняем расширение файла
+    name, ext = os.path.splitext(filename)
+    safe_name = slugify(name) or 'file'
+    safe_filename = f'{safe_name}{ext}'
+    
+    return f'{model_name}s/{dir_name}/{safe_filename}'
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Название")

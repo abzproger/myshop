@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Главная - Интернет-магазин мебели{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 100px 0;
+        margin-bottom: 50px;
+    }
+    .product-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .product-image {
+        height: 250px;
+        object-fit: cover;
+    }
+    .category-card {
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+    .category-card:hover {
+        transform: scale(1.05);
+    }
+    .discount-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Добро пожаловать в MyShop</h1>
+        <p class="lead mb-4">Качественная мебель для вашего дома и офиса</p>
+        <a href="#catalog" class="btn btn-light btn-lg">
+            <i class="bi bi-arrow-down-circle"></i> Смотреть каталог
+        </a>
+    </div>
+</section>
+
+<!-- Категории -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Категории товаров</h2>
+    <div class="row g-4">
+        {% for category in categories %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card category-card h-100">
+                {% if category.image %}
+                <img src="{{ category.image.url }}" class="card-img-top" alt="{{ category.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
+                </div>
+                {% endif %}
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ category.name }}</h5>
+                    <a href="#" class="btn btn-outline-primary btn-sm">Смотреть</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i> Категории пока не добавлены
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Популярные товары -->
+<section id="catalog" class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Популярные товары</h2>
+        <a href="#" class="btn btn-outline-primary">Все товары <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-4">
+        {% for variant in featured_products %}
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="card product-card h-100 position-relative">
+                {% if variant.get_discount_amount > 0 %}
+                <span class="badge bg-danger discount-badge">
+                    -{{ variant.get_discount_amount|floatformat:0 }} руб.
+                </span>
+                {% endif %}
+                {% if variant.images.first %}
+                <img src="{{ variant.images.first.image.url }}" class="card-img-top product-image" alt="{{ variant }}">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center product-image">
+                    <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                </div>
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <h6 class="card-title">{{ variant.product.name }}</h6>
+                    <p class="card-text text-muted small mb-2">
+                        {% if variant.size %}<span class="badge bg-secondary">{{ variant.size }}</span>{% endif %}
+                        {% if variant.color %}<span class="badge bg-secondary">{{ variant.color }}</span>{% endif %}
+                    </p>
+                    <div class="mt-auto">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            {% if variant.get_price_with_discount < variant.get_base_price %}
+                            <div>
+                                <span class="text-decoration-line-through text-muted small">{{ variant.get_base_price }} руб.</span>
+                                <span class="fs-5 fw-bold text-danger ms-2">{{ variant.get_price_with_discount|floatformat:0 }} руб.</span>
+                            </div>
+                            {% else %}
+                            <span class="fs-5 fw-bold">{{ variant.get_base_price|floatformat:0 }} руб.</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="#" class="btn btn-primary">
+                                <i class="bi bi-cart-plus"></i> В корзину
+                            </a>
+                            <a href="{% url 'catalog:product_detail' variant.product.slug %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-eye"></i> Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i> Товары пока не добавлены
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Преимущества -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="bi bi-truck text-primary" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Быстрая доставка</h5>
+                    <p class="text-muted">Доставка по всей России</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="bi bi-shield-check text-success" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Гарантия качества</h5>
+                    <p class="text-muted">Официальная гарантия на все товары</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="bi bi-credit-card text-info" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Удобная оплата</h5>
+                    <p class="text-muted">Наличные, карта, рассрочка</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="bi bi-headset text-warning" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Поддержка 24/7</h5>
+                    <p class="text-muted">Всегда на связи</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Контакты - Интернет-магазин мебели{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 80px 0;
+        margin-bottom: 50px;
+    }
+    .contact-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+    .contact-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .contact-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+    .map-container {
+        height: 400px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .map-placeholder {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    .form-section {
+        background: #f8f9fa;
+        padding: 40px;
+        border-radius: 10px;
+    }
+    .social-link {
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 50px;
+        margin: 0 10px;
+        transition: transform 0.3s ease;
+        text-decoration: none;
+    }
+    .social-link:hover {
+        transform: scale(1.1);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Свяжитесь с нами</h1>
+        <p class="lead">Мы всегда рады ответить на ваши вопросы и помочь с выбором мебели</p>
+    </div>
+</section>
+
+<!-- Контактная информация -->
+<section class="container mb-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card contact-card text-center h-100">
+                <div class="card-body">
+                    <div class="contact-icon mx-auto">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <h5 class="card-title">Адрес</h5>
+                    <p class="card-text text-muted">
+                        г. Москва, ул. Примерная, д. 123<br>
+                        БЦ "Мебельный", офис 456
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card contact-card text-center h-100">
+                <div class="card-body">
+                    <div class="contact-icon mx-auto">
+                        <i class="bi bi-telephone-fill"></i>
+                    </div>
+                    <h5 class="card-title">Телефон</h5>
+                    <p class="card-text">
+                        <a href="tel:+79991234567" class="text-decoration-none">
+                            +7 (999) 123-45-67
+                        </a><br>
+                        <small class="text-muted">Ежедневно с 9:00 до 21:00</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card contact-card text-center h-100">
+                <div class="card-body">
+                    <div class="contact-icon mx-auto">
+                        <i class="bi bi-envelope-fill"></i>
+                    </div>
+                    <h5 class="card-title">Email</h5>
+                    <p class="card-text">
+                        <a href="mailto:info@myshop.ru" class="text-decoration-none">
+                            info@myshop.ru
+                        </a><br>
+                        <small class="text-muted">Ответим в течение 24 часов</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Карта и форма обратной связи -->
+<section class="container mb-5">
+    <div class="row g-4">
+        <!-- Карта -->
+        <div class="col-lg-6">
+            <h3 class="mb-4">Как нас найти</h3>
+            <div class="map-container">
+                <div class="map-placeholder">
+                    <div class="text-center">
+                        <i class="bi bi-map" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <p class="lead">Карта будет здесь</p>
+                        <p>Вы можете встроить Яндекс.Карты или Google Maps</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <p class="text-muted">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Как добраться:</strong> Метро "Примерная", выход к БЦ "Мебельный". 
+                    Мы находимся на 4 этаже, офис 456.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Форма обратной связи -->
+        <div class="col-lg-6">
+            <h3 class="mb-4">Напишите нам</h3>
+            <div class="form-section">
+                <form method="post" action="#">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Ваше имя <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Телефон</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="+7 (999) 123-45-67">
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Тема обращения</label>
+                        <select class="form-select" id="subject" name="subject">
+                            <option value="">Выберите тему</option>
+                            <option value="question">Вопрос о товаре</option>
+                            <option value="order">Вопрос о заказе</option>
+                            <option value="delivery">Доставка</option>
+                            <option value="warranty">Гарантия и возврат</option>
+                            <option value="other">Другое</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Сообщение <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="consent" name="consent" required>
+                        <label class="form-check-label" for="consent">
+                            Я согласен на обработку персональных данных <span class="text-danger">*</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-send"></i> Отправить сообщение
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Режим работы и отделы -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Режим работы и отделы</h2>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock-history text-primary" style="font-size: 2.5rem; margin-bottom: 15px;"></i>
+                        <h5>Режим работы</h5>
+                        <p class="text-muted mb-0">
+                            <strong>Пн-Пт:</strong> 9:00 - 21:00<br>
+                            <strong>Сб-Вс:</strong> 10:00 - 20:00
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-headset text-primary" style="font-size: 2.5rem; margin-bottom: 15px;"></i>
+                        <h5>Служба поддержки</h5>
+                        <p class="text-muted mb-0">
+                            <strong>Телефон:</strong> +7 (999) 123-45-67<br>
+                            <strong>Email:</strong> support@myshop.ru
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-truck text-primary" style="font-size: 2.5rem; margin-bottom: 15px;"></i>
+                        <h5>Отдел доставки</h5>
+                        <p class="text-muted mb-0">
+                            <strong>Телефон:</strong> +7 (999) 123-45-68<br>
+                            <strong>Email:</strong> delivery@myshop.ru
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-briefcase text-primary" style="font-size: 2.5rem; margin-bottom: 15px;"></i>
+                        <h5>Оптовые продажи</h5>
+                        <p class="text-muted mb-0">
+                            <strong>Телефон:</strong> +7 (999) 123-45-69<br>
+                            <strong>Email:</strong> wholesale@myshop.ru
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Социальные сети -->
+<section class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto text-center">
+            <h2 class="mb-4">Мы в социальных сетях</h2>
+            <p class="lead text-muted mb-4">
+                Подписывайтесь на наши страницы, чтобы быть в курсе новинок, акций и специальных предложений
+            </p>
+            <div class="d-flex justify-content-center flex-wrap">
+                <a href="#" class="social-link" title="ВКонтакте">
+                    <i class="bi bi-vk"></i>
+                </a>
+                <a href="#" class="social-link" title="Telegram">
+                    <i class="bi bi-telegram"></i>
+                </a>
+                <a href="#" class="social-link" title="Instagram">
+                    <i class="bi bi-instagram"></i>
+                </a>
+                <a href="#" class="social-link" title="WhatsApp">
+                    <i class="bi bi-whatsapp"></i>
+                </a>
+                <a href="#" class="social-link" title="YouTube">
+                    <i class="bi bi-youtube"></i>
+                </a>
+            </div>
+            <div class="mt-4">
+                <p class="text-muted">
+                    <i class="bi bi-info-circle"></i> 
+                    В наших социальных сетях вы найдете обзоры товаров, идеи для интерьера, 
+                    советы по выбору мебели и многое другое!
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Часто задаваемые вопросы</h2>
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Как оформить заказ?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Выберите товар, добавьте его в корзину и оформите заказ. Наш менеджер свяжется с вами для подтверждения заказа в течение 30 минут.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Какие способы доставки доступны?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Мы доставляем мебель по всей России. Доступна курьерская доставка, доставка до пункта выдачи и самовывоз со склада. Стоимость и сроки доставки рассчитываются индивидуально.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Можно ли вернуть товар?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Да, вы можете вернуть товар в течение 14 дней с момента покупки при условии сохранения товарного вида и упаковки. Возврат осуществляется согласно законодательству РФ.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                Есть ли гарантия на товары?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Да, на все товары предоставляется официальная гарантия от производителя. Срок гарантии указан в описании каждого товара. Мы также предоставляем гарантийное обслуживание.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

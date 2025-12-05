@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}О нас - Интернет-магазин мебели{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 80px 0;
+        margin-bottom: 50px;
+    }
+    .about-section {
+        padding: 60px 0;
+    }
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: white;
+        font-size: 2rem;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 40px;
+        padding-bottom: 30px;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        border: 4px solid white;
+        box-shadow: 0 0 0 4px #667eea;
+    }
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 9px;
+        top: 20px;
+        width: 2px;
+        height: calc(100% - 20px);
+        background: #e0e0e0;
+    }
+    .timeline-item:last-child::after {
+        display: none;
+    }
+    .team-card {
+        transition: transform 0.3s ease;
+    }
+    .team-card:hover {
+        transform: translateY(-10px);
+    }
+    .stats-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+    }
+    .stat-item {
+        text-align: center;
+    }
+    .stat-number {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">О нашей компании</h1>
+        <p class="lead">Мы создаем уют и комфорт в вашем доме уже более 10 лет</p>
+    </div>
+</section>
+
+<!-- О компании -->
+<section class="about-section">
+    <div class="container">
+        <div class="row align-items-center mb-5">
+            <div class="col-lg-6">
+                <h2 class="mb-4">Добро пожаловать в MyShop</h2>
+                <p class="lead">Мы — команда профессионалов, которая помогает создавать уютные и стильные интерьеры для наших клиентов.</p>
+                <p>Наш интернет-магазин мебели предлагает широкий ассортимент качественной мебели для дома и офиса. Мы тщательно отбираем каждый товар, чтобы предложить вам только лучшее.</p>
+                <p>Мы гордимся тем, что за годы работы помогли тысячам клиентов обустроить свои дома и офисы. Наша миссия — сделать качественную мебель доступной для каждого.</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-lg">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">Наши ценности</h4>
+                        <ul class="list-unstyled">
+                            <li class="mb-3">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Качество</strong> — мы предлагаем только проверенную мебель от надежных производителей
+                            </li>
+                            <li class="mb-3">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Доступность</strong> — честные цены без накруток и скрытых платежей
+                            </li>
+                            <li class="mb-3">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Сервис</strong> — профессиональная консультация и поддержка на всех этапах
+                            </li>
+                            <li class="mb-3">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong>Надежность</strong> — официальная гарантия на все товары
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Статистика -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">10+</div>
+                    <div class="stat-label">Лет на рынке</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">5000+</div>
+                    <div class="stat-label">Довольных клиентов</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">1000+</div>
+                    <div class="stat-label">Товаров в каталоге</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Поддержка клиентов</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Наши преимущества -->
+<section class="about-section bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Почему выбирают нас</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <h4>Быстрая доставка</h4>
+                    <p class="text-muted">Доставляем мебель по всей России. Собственная служба доставки работает 7 дней в неделю.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h4>Гарантия качества</h4>
+                    <p class="text-muted">Официальная гарантия от производителя на все товары. Возврат и обмен в течение 14 дней.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h4>Профессиональная команда</h4>
+                    <p class="text-muted">Наши консультанты помогут выбрать идеальную мебель для вашего интерьера.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                    <h4>Гибкая оплата</h4>
+                    <p class="text-muted">Наличные, банковские карты, рассрочка без переплат. Принимаем все популярные способы оплаты.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                    <h4>Сборка и установка</h4>
+                    <p class="text-muted">Профессиональная сборка мебели нашими мастерами. Гарантия на выполненные работы.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <h4>Только лучшие бренды</h4>
+                    <p class="text-muted">Работаем напрямую с производителями. Только оригинальная и сертифицированная мебель.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- История компании -->
+<section class="about-section">
+    <div class="container">
+        <h2 class="text-center mb-5">Наша история</h2>
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="timeline-item">
+                    <h5>2014 — Начало пути</h5>
+                    <p class="text-muted">Основание компании. Мы начали с небольшого магазина мебели в центре города.</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>2016 — Онлайн-магазин</h5>
+                    <p class="text-muted">Запуск интернет-магазина. Мы поняли, что будущее за онлайн-торговлей.</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>2018 — Расширение ассортимента</h5>
+                    <p class="text-muted">Значительно расширили каталог. Добавили мебель для офиса и специализированные коллекции.</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>2020 — Собственный склад</h5>
+                    <p class="text-muted">Открыли собственный склад площадью 5000 м². Это позволило ускорить доставку и снизить цены.</p>
+                </div>
+                <div class="timeline-item">
+                    <h5>2024 — Лидер рынка</h5>
+                    <p class="text-muted">Стали одним из лидеров рынка онлайн-продажи мебели. Более 5000 довольных клиентов.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Команда -->
+<section class="about-section bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Наша команда</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card team-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle" style="font-size: 4rem; color: #667eea;"></i>
+                        </div>
+                        <h5>Анна Иванова</h5>
+                        <p class="text-muted mb-3">Директор по продажам</p>
+                        <p class="small">10 лет опыта в сфере мебельного бизнеса. Поможет выбрать идеальное решение для вашего интерьера.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card team-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle" style="font-size: 4rem; color: #667eea;"></i>
+                        </div>
+                        <h5>Дмитрий Петров</h5>
+                        <p class="text-muted mb-3">Менеджер по закупкам</p>
+                        <p class="small">Отвечает за качество товаров. Лично проверяет каждую партию мебели перед поступлением в продажу.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card team-card h-100 text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle" style="font-size: 4rem; color: #667eea;"></i>
+                        </div>
+                        <h5>Мария Сидорова</h5>
+                        <p class="text-muted mb-3">Специалист по клиентскому сервису</p>
+                        <p class="small">Всегда готова помочь с выбором и ответить на любые вопросы. Работает с клиентами 24/7.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Контакты -->
+<section class="about-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="mb-4">Свяжитесь с нами</h2>
+                <p class="lead mb-4">Мы всегда рады ответить на ваши вопросы и помочь с выбором мебели</p>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <i class="bi bi-telephone-fill text-primary" style="font-size: 2rem;"></i>
+                        <h5 class="mt-3">Телефон</h5>
+                        <p>+7 (999) 123-45-67</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="bi bi-envelope-fill text-primary" style="font-size: 2rem;"></i>
+                        <h5 class="mt-3">Email</h5>
+                        <p>info@myshop.ru</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="bi bi-clock-fill text-primary" style="font-size: 2rem;"></i>
+                        <h5 class="mt-3">Режим работы</h5>
+                        <p>Пн-Вс: 9:00 - 21:00</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="#" class="btn btn-primary btn-lg me-2">
+                        <i class="bi bi-chat-dots"></i> Написать нам
+                    </a>
+                    <a href="{% url 'catalog:index' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-arrow-left"></i> Вернуться на главную
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
