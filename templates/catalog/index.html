@@ -121,10 +121,24 @@
                             {% endif %}
                         </div>
                         <div class="d-grid gap-2">
-                            <a href="#" class="btn btn-primary">
-                                <i class="bi bi-cart-plus"></i> В корзину
-                            </a>
-                            <a href="{% url 'catalog:product_detail' variant.product.slug %}" class="btn btn-outline-secondary btn-sm">
+                            <form method="post"
+                                  action="{% url 'cart:add' variant.id %}"
+                                  class="js-add-to-cart-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="quantity" value="1">
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit"
+                                        class="btn btn-primary w-100 js-add-to-cart-button"
+                                        data-variant-id="{{ variant.id }}"
+                                        data-in-cart="{% if variant in cart %}1{% else %}0{% endif %}">
+                                    {% if variant in cart %}
+                                        <i class="bi bi-cart-check"></i> В корзине (перейти)
+                                    {% else %}
+                                        <i class="bi bi-cart-plus"></i> В корзину
+                                    {% endif %}
+                                </button>
+                            </form>
+                            <a href="{% url 'catalog:product_detail' variant.product.slug %}?variant={{ variant.id }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="bi bi-eye"></i> Подробнее
                             </a>
                         </div>

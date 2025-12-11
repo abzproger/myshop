@@ -226,9 +226,25 @@
             
             <!-- Кнопки действий -->
             <div class="d-grid gap-2 mb-4">
-                <button class="btn btn-primary btn-lg" onclick="addToCart()">
-                    <i class="bi bi-cart-plus"></i> Добавить в корзину
-                </button>
+                {% if selected_variant %}
+                <form method="post"
+                      action="{% url 'cart:add' selected_variant.id %}"
+                      class="js-add-to-cart-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" value="1">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit"
+                            class="btn btn-primary btn-lg w-100 js-add-to-cart-button"
+                            data-variant-id="{{ selected_variant.id }}"
+                            data-in-cart="{% if selected_variant in cart %}1{% else %}0{% endif %}">
+                        {% if selected_variant in cart %}
+                            <i class="bi bi-cart-check"></i> В корзине (перейти)
+                        {% else %}
+                            <i class="bi bi-cart-plus"></i> Добавить в корзину
+                        {% endif %}
+                    </button>
+                </form>
+                {% endif %}
                 <button class="btn btn-outline-secondary">
                     <i class="bi bi-heart"></i> В избранное
                 </button>
@@ -339,11 +355,6 @@ function changeMainImage(src, element) {
 function openImageModal(src) {
     document.getElementById('modalImage').src = src;
     new bootstrap.Modal(document.getElementById('imageModal')).show();
-}
-
-function addToCart() {
-    // Здесь будет логика добавления в корзину
-    alert('Товар добавлен в корзину!');
 }
 </script>
 {% endblock %}

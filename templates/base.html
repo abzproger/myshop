@@ -41,9 +41,9 @@
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {% if url_name == 'detail' and request.resolver_match.namespace == 'cart' %}active{% endif %}" href="{% url 'cart:detail' %}">
                             <i class="bi bi-cart"></i> Корзина
-                            <span class="badge bg-primary">0</span>
+                            <span class="badge bg-primary" id="cart-count-badge">{{ cart_total_quantity }}</span>
                         </a>
                     </li>
                     {% if user.is_authenticated %}
@@ -52,16 +52,25 @@
                             <i class="bi bi-person-circle"></i> {{ user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#">Профиль</a></li>
-                            <li><a class="dropdown-item" href="#">Заказы</a></li>
+                            <li><a class="dropdown-item" href="{% url 'users:profile' %}">Профиль</a></li>
+                            <li><a class="dropdown-item" href="{% url 'orders:history' %}">История заказов</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            {% if user.is_staff %}
                             <li><a class="dropdown-item" href="{% url 'admin:index' %}">Админ-панель</a></li>
-                            <li><a class="dropdown-item" href="#">Выйти</a></li>
+                            {% endif %}
+                            <li>
+                                <form method="post" action="{% url 'users:logout' %}" class="px-3 py-1">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item px-0">
+                                        Выйти
+                                    </button>
+                                </form>
+                            </li>
                         </ul>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {% if url_name == 'login' or url_name == 'signup' %}active{% endif %}" href="{% url 'users:login' %}">
                             <i class="bi bi-box-arrow-in-right"></i> Войти
                         </a>
                     </li>
@@ -120,7 +129,76 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    
+
+    <script>
+    // Общий JS для кнопок "В корзину" на страницах каталога/товара
+    (function () {
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const csrftoken = getCookie('csrftoken');
+            const cartUrl = "{% url 'cart:detail' %}";
+
+            document.querySelectorAll('.js-add-to-cart-form').forEach(function (form) {
+                const button = form.querySelector('.js-add-to-cart-button');
+                if (!button) return;
+
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    // Если товар уже в корзине — просто переходим в корзину
+                    if (button.dataset.inCart === '1') {
+                        window.location.href = cartUrl;
+                        return;
+                    }
+
+                    const formData = new FormData(form);
+                    // Для добавления по 1шт override не нужен
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: new URLSearchParams(formData),
+                    })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        if (!data.success) return;
+
+                        // Обновляем бейдж в шапке
+                        const headerBadge = document.getElementById('cart-count-badge');
+                        if (headerBadge) {
+                            headerBadge.textContent = data.cart_total_quantity;
+                        }
+
+                        // Меняем состояние кнопки на "В корзине (перейти)"
+                        button.dataset.inCart = '1';
+                        button.innerHTML = '<i class="bi bi-cart-check"></i> В корзине (перейти)';
+                    })
+                    .catch(function (err) {
+                        console.error('Ошибка добавления в корзину:', err);
+                    });
+                });
+            });
+        });
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -270,3 +270,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("ТЕСТИРОВАНИЕ ЗАВЕРШЕНО УСПЕШНО!"))
         self.stdout.write("=" * 70)
 
+
+
+
+

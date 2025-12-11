@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.utils import timezone
 from .models import (
-    Category, Product, ProductVariant, 
-    ProductImage, Attribute, AttributeValue, Discount
+    Category, Product, ProductVariant,
+    ProductImage, Attribute, AttributeValue, Discount,
+    ContactMessage,
 )
 
 
@@ -154,3 +155,11 @@ class DiscountAdmin(admin.ModelAdmin):
                 form.base_fields['category'].widget.attrs['style'] = 'display:none'
                 form.base_fields['product'].widget.attrs['style'] = 'display:none'
         return form
+
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'phone', 'subject', 'created_at', 'is_processed')
+    list_filter = ('is_processed', 'subject', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'message')
+    readonly_fields = ('created_at', 'source_url')

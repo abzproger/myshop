@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Корзина - MEBELHUB{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h1 class="h4">Корзина</h1>
+        </div>
+    </div>
+
+    <!-- Пустая корзина -->
+    <div id="cart-empty" class="{% if not cart.is_empty %}d-none{% endif %}">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-cart-x text-muted" style="font-size: 3rem;"></i>
+                        <h2 class="h5 mt-3 mb-2">Ваша корзина пуста</h2>
+                        <p class="text-muted mb-4">Добавьте товары из каталога, чтобы оформить заказ.</p>
+                        <a href="{% url 'catalog:catalog' %}" class="btn btn-primary">
+                            Перейти в каталог
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основное содержимое корзины -->
+    <div id="cart-main" class="{% if cart.is_empty %}d-none{% endif %}">
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Товар</th>
+                                        <th class="text-center">Кол-во</th>
+                                        <th class="text-end">Цена</th>
+                                        <th class="text-end">Сумма</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cart-table-body">
+                                    {% for item in cart %}
+                                    <tr data-variant-id="{{ item.variant.id }}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.variant.images.first %}
+                                            <img src="{{ item.variant.images.first.image.url }}"
+                                                 alt="{{ item.variant.product.name }}"
+                                                 class="me-2"
+                                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;">
+                                            {% endif %}
+                                            <div>
+                                                <a href="{% url 'catalog:product_detail' item.variant.product.slug %}?variant={{ item.variant.id }}"
+                                                   class="fw-semibold text-decoration-none">
+                                                    {{ item.variant.product.name }}
+                                                </a>
+                                                <div class="text-muted small">
+                                                    {% if item.variant.size %}Размер: {{ item.variant.size }}{% endif %}
+                                                    {% if item.variant.color %}{% if item.variant.size %}, {% endif %}Цвет: {{ item.variant.color }}{% endif %}
+                                                    {% if item.variant.sku %}<br>SKU: {{ item.variant.sku }}{% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="input-group input-group-sm justify-content-center" style="max-width: 140px; margin: 0 auto;">
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary btn-qty-minus"
+                                                    data-variant-id="{{ item.variant.id }}">
+                                                -
+                                            </button>
+                                            <input type="number"
+                                                   class="form-control text-center cart-qty-input"
+                                                   min="1"
+                                                   value="{{ item.quantity }}"
+                                                   data-variant-id="{{ item.variant.id }}"
+                                                   style="max-width: 70px;">
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary btn-qty-plus"
+                                                    data-variant-id="{{ item.variant.id }}">
+                                                +
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        {{ item.price|floatformat:0 }} ₽
+                                    </td>
+                                    <td class="text-end cart-line-total" data-variant-id="{{ item.variant.id }}">
+                                        <strong>{{ item.total_price|floatformat:0 }} ₽</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="post" action="{% url 'cart:remove' item.variant.id %}" class="cart-remove-form">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="mb-3">Итого</h5>
+                        <p class="d-flex justify-content-between mb-1">
+                            <span>Товаров:</span>
+                            <span id="cart-total-quantity">{{ cart_total_quantity }}</span>
+                        </p>
+                        <p class="d-flex justify-content-between mb-3">
+                            <span>Сумма:</span>
+                            <span class="fw-bold" id="cart-total-price">{{ cart_total_price|floatformat:0 }} ₽</span>
+                        </p>
+                        <a href="{% url 'catalog:catalog' %}" class="btn btn-outline-secondary w-100 mb-2">
+                            Продолжить покупки
+                        </a>
+                        <button class="btn btn-primary w-100" disabled>
+                            Оформить заказ (скоро)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Получение CSRF-токена из cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function updateCartQuantity(variantId, quantity) {
+    const row = document.querySelector(`tr[data-variant-id="${variantId}"]`);
+    if (!row) return;
+    const form = row.querySelector('.cart-remove-form');
+    const url = form.getAttribute('action').replace('remove', 'add'); // используем cart_add с override=False, но для обновления количества лучше отдельный эндпоинт. Здесь оставим remove+add логику через cart_add с override=false в бэкенде, а для текущей реализации будем вызывать cart_add с override через будущее расширение.
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const csrftoken = getCookie('csrftoken');
+
+    function sendUpdate(variantId, quantity) {
+        const row = document.querySelector(`tr[data-variant-id="${variantId}"]`);
+        if (!row) return;
+        const form = row.querySelector('form.cart-remove-form');
+        const baseUrl = form.getAttribute('action').replace('remove', 'add');
+
+        const formData = new URLSearchParams();
+        formData.append('quantity', quantity);
+        formData.append('override', '1');
+
+        fetch(baseUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString(),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) return;
+
+            // Обновляем количество и сумму по строке
+            const qtyInput = row.querySelector('.cart-qty-input');
+            const lineTotalCell = row.querySelector('.cart-line-total');
+            if (qtyInput) qtyInput.value = data.quantity;
+            if (lineTotalCell) lineTotalCell.innerHTML = `<strong>${data.line_total.toFixed(0)} ₽</strong>`;
+
+            // Обновляем общий итог и счётчик в шапке
+            const totalQtyEl = document.getElementById('cart-total-quantity');
+            const totalPriceEl = document.getElementById('cart-total-price');
+            if (totalQtyEl) totalQtyEl.textContent = data.cart_total_quantity;
+            if (totalPriceEl) totalPriceEl.textContent = `${data.cart_total_price.toFixed(0)} ₽`;
+            const headerBadge = document.getElementById('cart-count-badge');
+            if (headerBadge) headerBadge.textContent = data.cart_total_quantity;
+        })
+        .catch(err => {
+            console.error('Ошибка обновления корзины:', err);
+        });
+    }
+
+    document.querySelectorAll('.btn-qty-plus').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const variantId = this.dataset.variantId;
+            const row = document.querySelector(`tr[data-variant-id="${variantId}"]`);
+            const input = row.querySelector('.cart-qty-input');
+            let qty = parseInt(input.value || '1', 10);
+            qty += 1;
+            input.value = qty;
+            sendUpdate(variantId, qty);
+        });
+    });
+
+    document.querySelectorAll('.btn-qty-minus').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const variantId = this.dataset.variantId;
+            const row = document.querySelector(`tr[data-variant-id="${variantId}"]`);
+            const input = row.querySelector('.cart-qty-input');
+            let qty = parseInt(input.value || '1', 10);
+            qty = Math.max(1, qty - 1);
+            input.value = qty;
+            sendUpdate(variantId, qty);
+        });
+    });
+
+    document.querySelectorAll('.cart-qty-input').forEach(input => {
+        input.addEventListener('change', function () {
+            const variantId = this.dataset.variantId;
+            let qty = parseInt(this.value || '1', 10);
+            if (isNaN(qty) || qty < 1) qty = 1;
+            this.value = qty;
+            sendUpdate(variantId, qty);
+        });
+    });
+});
+</script>
+{% endblock %}
+
+

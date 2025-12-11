@@ -349,3 +349,35 @@ class Discount(models.Model):
         discount_amount = self.calculate_discount(price)
         return max(price - discount_amount, Decimal('0.00'))  # Цена не может быть отрицательной
 
+
+class ContactMessage(models.Model):
+    """Сообщение с формы контактов"""
+    SUBJECT_CHOICES = [
+        ('question', 'Вопрос о товаре'),
+        ('order', 'Вопрос о заказе'),
+        ('delivery', 'Доставка'),
+        ('warranty', 'Гарантия и возврат'),
+        ('other', 'Другое'),
+    ]
+
+    name = models.CharField(max_length=200, verbose_name="Имя")
+    email = models.EmailField(verbose_name="Email")
+    phone = models.CharField(max_length=50, blank=True, verbose_name="Телефон")
+    subject = models.CharField(
+        max_length=50,
+        choices=SUBJECT_CHOICES,
+        blank=True,
+        verbose_name="Тема обращения",
+    )
+    message = models.TextField(verbose_name="Сообщение")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    is_processed = models.BooleanField(default=False, verbose_name="Обработано")
+    source_url = models.CharField(max_length=500, blank=True, verbose_name="Источник (URL)")
+
+    class Meta:
+        verbose_name = "Сообщение с формы контактов"
+        verbose_name_plural = "Сообщения с формы контактов"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.email}) — {self.get_subject_display() or 'Без темы'}"

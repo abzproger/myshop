@@ -1,27 +1,52 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
-from .models import Category, ProductVariant, Product, AttributeValue
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+from .models import Category, ProductVariant, Product, AttributeValue, ContactMessage
+from .forms import ContactForm
 
 
 def index(request):
     """Главная страница интернет-магазина"""
-    # Получаем категории (первые 8, без родительских для главной страницы)
-    categories = Category.objects.filter(parent__isnull=True)[:8]
-    
-    # Получаем популярные товары (активные варианты с изображениями)
-    featured_products = ProductVariant.objects.filter(
-        is_active=True,
-        product__is_active=True
-    ).select_related('product', 'product__category').prefetch_related('images')[:12]
+    # Категории для главной страницы (почти статичные) — кэшируем на 1 час
+    categories = cache.get('index_categories')
+    if categories is None:
+        categories = list(
+            Category.objects.filter(parent__isnull=True)[:8]
+        )
+        cache.set('index_categories', categories, 60 * 60)
+
+    # Популярные товары (активные варианты с изображениями) — кэшируем результат
+    # сортировки по просмотрам на 5 минут.
+    featured_products = cache.get('index_featured_products')
+    if featured_products is None:
+        variants_qs = ProductVariant.objects.filter(
+            is_active=True,
+            product__is_active=True
+        ).select_related('product', 'product__category').prefetch_related('images')
+
+        variants = list(variants_qs)  # Можно ограничить, если товаров станет очень много
+
+        def get_views(v):
+            key = f"product_variant:{v.id}:views"
+            return cache.get(key, 0) or 0
+
+        variants_sorted = sorted(variants, key=get_views, reverse=True)
+        featured_products = variants_sorted[:12]
+        cache.set('index_featured_products', featured_products, 5 * 60)
     
     context = {
         'categories': categories,
         'featured_products': featured_products,
     }
-    
+
     return render(request, 'catalog/index.html', context)
 
 
+@cache_page(60 * 60)  # Страница полностью статичная — кэшируем целиком на 1 час
 def about(request):
     """Страница 'О нас'"""
     return render(request, 'catalog/about.html')
@@ -29,13 +54,55 @@ def about(request):
 
 def contacts(request):
     """Страница 'Контакты'"""
-    return render(request, 'catalog/contacts.html')
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            contact: ContactMessage = form.save(commit=False)
+            contact.source_url = request.META.get('HTTP_REFERER', '')
+            contact.save()
+
+            # Пытаемся отправить письмо на почту магазина.
+            subject_display = contact.get_subject_display() or "Обращение с формы контактов"
+            email_subject = f"[Контакты MEBELHUB] {subject_display}"
+            email_body = (
+                f"Имя: {contact.name}\n"
+                f"Email: {contact.email}\n"
+                f"Телефон: {contact.phone}\n"
+                f"Тема: {subject_display}\n\n"
+                f"Сообщение:\n{contact.message}\n\n"
+                f"Источник: {contact.source_url}"
+            )
+
+            to_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or "info@mebelhub.ru"
+            try:
+                send_mail(
+                    email_subject,
+                    email_body,
+                    to_email,
+                    [to_email],
+                    fail_silently=True,
+                )
+            except Exception:
+                # Не падаем, даже если почта не настроена.
+                pass
+
+            messages.success(request, "Ваше сообщение успешно отправлено. Мы свяжемся с вами в ближайшее время.")
+            return redirect('catalog:contacts')
+        else:
+            messages.error(request, "Пожалуйста, исправьте ошибки в форме.")
+    else:
+        form = ContactForm()
+
+    return render(request, 'catalog/contacts.html', {'form': form})
 
 
 def catalog(request, category_slug=None):
     """Страница каталога товаров"""
-    # Получаем все категории для фильтра
-    categories = Category.objects.filter(parent__isnull=True)
+    # Получаем все категории для фильтра (почти статичные) — кэшируем на 1 час
+    categories = cache.get('catalog_root_categories')
+    if categories is None:
+        categories = list(Category.objects.filter(parent__isnull=True))
+        cache.set('catalog_root_categories', categories, 60 * 60)
     
     # Получаем товары (варианты)
     variants = ProductVariant.objects.filter(
@@ -126,6 +193,15 @@ def product_detail(request, product_slug):
             selected_variant = variants.filter(pk=variant_id).first()
         if selected_variant is None:
             selected_variant = variants.first()
+
+    # Увеличиваем счётчик просмотров выбранного варианта в Redis
+    if selected_variant:
+        key = f"product_variant:{selected_variant.id}:views"
+        try:
+            cache.incr(key)
+        except ValueError:
+            # Если ключ ещё не существует или не число
+            cache.set(key, 1)
 
     # Изображения ТОЛЬКО выбранного варианта
     variant_images = []
