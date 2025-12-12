@@ -84,11 +84,18 @@ WSGI_APPLICATION = 'shop.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+#
+# По умолчанию используем PostgreSQL. Параметры берём из .env,
+# чтобы удобно было запускать проект в разных окружениях.
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('POSTGRES_DB', default='myshop'),
+        'USER': env('POSTGRES_USER', default='myshop'),
+        'PASSWORD': env('POSTGRES_PASSWORD', default='myshop'),
+        'HOST': env('POSTGRES_HOST', default='127.0.0.1'),
+        'PORT': env('POSTGRES_PORT', default='5432'),
     }
 }
 
