@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Оформление заказа — шаг 1 - MEBELHUB{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h4 mb-3">Оформление заказа</h1>
+            <p class="text-muted mb-0">Шаг 1 из 3 — контактные данные</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Контактная информация</h2>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.full_name.id_for_label }}" class="form-label">ФИО</label>
+                            {{ form.full_name }}
+                            {% if form.full_name.errors %}
+                            <div class="text-danger small">{{ form.full_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">E-mail</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label">Телефон</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                            <div class="text-danger small">{{ form.phone.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'cart:detail' %}" class="btn btn-outline-secondary">
+                                Вернуться в корзину
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Далее
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3">Ваш заказ</h5>
+                    <ul class="list-unstyled small mb-3">
+                        {% for item in cart %}
+                        <li class="d-flex justify-content-between mb-1">
+                            <span>{{ item.variant.product.name }} × {{ item.quantity }}</span>
+                            <span>{{ item.total_price|floatformat:0 }} ₽</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <hr>
+                    <p class="d-flex justify-content-between mb-0">
+                        <span>Итого:</span>
+                        <strong>{{ cart.get_total_price|floatformat:0 }} ₽</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+
+

@@ -8,10 +8,18 @@
 {% block extra_css %}
 <style>
     .catalog-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
         color: white;
-        padding: 60px 0;
+        padding: 80px 0;
         margin-bottom: 30px;
+        background-image: linear-gradient(
+                rgba(0, 0, 0, 0.45),
+                rgba(0, 0, 0, 0.45)
+        ),
+        url("{% static 'img/hero-living-room.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
     }
     .product-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -53,10 +61,10 @@
     }
     .category-link:hover {
         background: #e9ecef;
-        color: #667eea;
+        color: #3a2b20;
     }
     .category-link.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #3a2b20 0%, #1a120b 100%);
         color: white;
     }
     .search-box {

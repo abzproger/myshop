@@ -126,9 +126,9 @@
                         <a href="{% url 'catalog:catalog' %}" class="btn btn-outline-secondary w-100 mb-2">
                             Продолжить покупки
                         </a>
-                        <button class="btn btn-primary w-100" disabled>
-                            Оформить заказ (скоро)
-                        </button>
+                        <a href="{% url 'orders:checkout_contact' %}" class="btn btn-primary w-100">
+                            Оформить заказ
+                        </a>
                     </div>
                 </div>
             </div>

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Оформление заказа — шаг 3 - MEBELHUB{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h4 mb-3">Оформление заказа</h1>
+            <p class="text-muted mb-0">Шаг 3 из 3 — подтверждение</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Контактные данные</h2>
+                    <p class="mb-1"><strong>ФИО:</strong> {{ contact.full_name }}</p>
+                    <p class="mb-1"><strong>E-mail:</strong> {{ contact.email }}</p>
+                    <p class="mb-0"><strong>Телефон:</strong> {{ contact.phone }}</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Адрес доставки</h2>
+                    <p class="mb-1">
+                        <strong>Способ получения:</strong>
+                        {% if address.delivery_method == 'pickup' %}
+                            Самовывоз
+                        {% elif address.delivery_method == 'courier' %}
+                            Доставка курьером
+                        {% else %}
+                            Не указан
+                        {% endif %}
+                    </p>
+                    {% if address.delivery_method == 'courier' %}
+                        <p class="mb-1"><strong>Город:</strong> {{ address.city }}</p>
+                        <p class="mb-1"><strong>Адрес:</strong> {{ address.address_line }}</p>
+                        {% if address.postal_code %}
+                        <p class="mb-1"><strong>Индекс:</strong> {{ address.postal_code }}</p>
+                        {% endif %}
+                        {% if address.comment %}
+                        <p class="mb-0"><strong>Комментарий:</strong> {{ address.comment }}</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="mb-0 text-muted">
+                            Самовывоз из магазина. Адрес и комментарий к доставке не требуются.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Оплата</h2>
+                    <p class="mb-0">
+                        <strong>Способ оплаты:</strong> Наличными при получении
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Подтверждение заказа</h2>
+                    <p class="text-muted small">
+                        Проверьте корректность введённых данных и состав заказа. После подтверждения с вами свяжется менеджер для уточнения деталей оплаты и доставки.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="agree" required>
+                            <label class="form-check-label small" for="agree">
+                                Я подтверждаю корректность данных и согласен(на) с обработкой персональных данных.
+                            </label>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'orders:checkout_address' %}" class="btn btn-outline-secondary">
+                                Назад
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                Подтвердить заказ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3">Ваш заказ</h5>
+                    <ul class="list-unstyled small mb-3">
+                        {% for item in cart %}
+                        <li class="d-flex justify-content-between mb-1">
+                            <span>{{ item.variant.product.name }} × {{ item.quantity }}</span>
+                            <span>{{ item.total_price|floatformat:0 }} ₽</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <hr>
+                    <p class="d-flex justify-content-between mb-0">
+                        <span>Итого:</span>
+                        <strong>{{ cart.get_total_price|floatformat:0 }} ₽</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+

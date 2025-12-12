@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Оформление заказа — шаг 2 - MEBELHUB{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h4 mb-3">Оформление заказа</h1>
+            <p class="text-muted mb-0">Шаг 2 из 3 — адрес доставки</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Доставка</h2>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label d-block">Способ получения</label>
+                            {% for choice in form.delivery_method %}
+                            <div class="form-check">
+                                {{ choice.tag }}
+                                <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                    {{ choice.choice_label }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% if form.delivery_method.errors %}
+                            <div class="text-danger small">{{ form.delivery_method.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div id="address-block">
+                            <div class="mb-3">
+                                <label for="{{ form.city.id_for_label }}" class="form-label">Город</label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                <div class="text-danger small">{{ form.city.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.address_line.id_for_label }}" class="form-label">Адрес доставки</label>
+                                {{ form.address_line }}
+                                {% if form.address_line.errors %}
+                                <div class="text-danger small">{{ form.address_line.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.postal_code.id_for_label }}" class="form-label">Почтовый индекс</label>
+                                {{ form.postal_code }}
+                                {% if form.postal_code.errors %}
+                                <div class="text-danger small">{{ form.postal_code.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.comment.id_for_label }}" class="form-label">Комментарий к заказу</label>
+                                {{ form.comment }}
+                                {% if form.comment.errors %}
+                                <div class="text-danger small">{{ form.comment.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'orders:checkout_contact' %}" class="btn btn-outline-secondary">
+                                Назад
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Далее
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3">Ваш заказ</h5>
+                    <ul class="list-unstyled small mb-3">
+                        {% for item in cart %}
+                        <li class="d-flex justify-content-between mb-1">
+                            <span>{{ item.variant.product.name }} × {{ item.quantity }}</span>
+                            <span>{{ item.total_price|floatformat:0 }} ₽</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <hr>
+                    <p class="d-flex justify-content-between mb-0">
+                        <span>Итого:</span>
+                        <strong>{{ cart.get_total_price|floatformat:0 }} ₽</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const deliveryRadios = document.querySelectorAll('input[name="{{ form.delivery_method.html_name }}"]');
+    const addressBlock = document.getElementById('address-block');
+
+    function updateAddressVisibility() {
+        let method = null;
+        deliveryRadios.forEach(function (radio) {
+            if (radio.checked) {
+                method = radio.value;
+            }
+        });
+
+        if (method === 'pickup') {
+            addressBlock.style.opacity = '0.5';
+            addressBlock.querySelectorAll('input, textarea').forEach(function (el) {
+                if (el.type !== 'radio') {
+                    el.disabled = true;
+                }
+            });
+        } else {
+            addressBlock.style.opacity = '1';
+            addressBlock.querySelectorAll('input, textarea').forEach(function (el) {
+                el.disabled = false;
+            });
+        }
+    }
+
+    deliveryRadios.forEach(function (radio) {
+        radio.addEventListener('change', updateAddressVisibility);
+    });
+
+    updateAddressVisibility();
+});
+</script>
+{% endblock %}

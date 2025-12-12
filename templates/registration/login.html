@@ -46,6 +46,14 @@
                         {% if form.password.errors %}
                         <div class="text-danger small">{{ form.password.errors.0 }}</div>
                         {% endif %}
+                        <div class="form-check mt-2">
+                            <input class="form-check-input js-toggle-password" type="checkbox"
+                                   id="show-login-password"
+                                   data-password-target="{{ form.password.id_for_label }}">
+                            <label class="form-check-label small" for="show-login-password">
+                                Показать пароль
+                            </label>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100 mb-3">
@@ -65,6 +73,22 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.js-toggle-password').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            const targetId = this.dataset.passwordTarget;
+            const input = document.getElementById(targetId);
+            if (!input) return;
+            input.type = this.checked ? 'text' : 'password';
+        });
+    });
+});
+</script>
 {% endblock %}
 
 
