@@ -33,6 +33,11 @@
 
                 <form method="post" action="">
                     {% csrf_token %}
+
+                    <div class="alert alert-secondary small mb-3" style="background: #f8f9fa;">
+                        Регистрируясь, вы подтверждаете своё согласие с <a href="{% url 'catalog:privacy' %}" target="_blank">Политикой конфиденциальности</a>.
+                    </div>
+
                     <div class="mb-3">
                         <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя</label>
                         {{ form.username }}

@@ -52,6 +52,12 @@ def about(request):
     return render(request, 'catalog/about.html')
 
 
+@cache_page(60 * 60)  # Страница полностью статичная — кэшируем целиком на 1 час
+def privacy(request):
+    """Страница Политики конфиденциальности"""
+    return render(request, 'catalog/privacy.html')
+
+
 def contacts(request):
     """Страница 'Контакты'"""
     if request.method == 'POST':
