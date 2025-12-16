@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: myshop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: myshop
+      POSTGRES_USER: myshop
+      POSTGRES_PASSWORD: myshop
+    ports:
+      - "5432:5432"
+    volumes:
+      - myshop_pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: myshop-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - myshop_redisdata:/data
+
+volumes:
+  myshop_pgdata:
+  myshop_redisdata:
+
+
