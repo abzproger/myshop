@@ -1,4 +1,7 @@
+import re
+
 from django import forms
+from django.core.exceptions import ValidationError
 
 
 class CheckoutContactForm(forms.Form):
@@ -33,6 +36,20 @@ class CheckoutContactForm(forms.Form):
             }
         ),
     )
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone", "")
+        normalized = re.sub(r"[^\d+]", "", phone)
+
+        # Допускаем: +7XXXXXXXXXX, 8XXXXXXXXXX, 7XXXXXXXXXX (приведём к +7...)
+        if normalized.startswith("+7") and len(normalized) == 12:
+            return normalized
+        if normalized.startswith("8") and len(normalized) == 11:
+            return "+7" + normalized[1:]
+        if normalized.startswith("7") and len(normalized) == 11:
+            return "+7" + normalized[1:]
+
+        raise ValidationError("Укажите телефон в формате +7XXXXXXXXXX")
 
 
 class CheckoutAddressForm(forms.Form):

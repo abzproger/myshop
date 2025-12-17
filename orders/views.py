@@ -121,8 +121,44 @@ def checkout_confirm(request):
         return redirect("orders:checkout_address")
 
     if request.method == "POST":
-        # Здесь можно создать заказ в БД и отправить письмо
-        # Пока просто очищаем корзину и данные checkout.
+        # Собираем все необходимые данные
+        from orders.models import Order, OrderItem
+        from django.db import transaction
+        contact_data = request.session.get(CHECKOUT_CONTACT_KEY)
+        address_data = request.session.get(CHECKOUT_ADDRESS_KEY)
+
+        # Проверка, что пользователю есть что сохранить
+        if not contact_data or not address_data or cart.is_empty():
+            messages.error(request, "Не хватает контактных данных, адреса или корзина пуста.")
+            return redirect("orders:checkout_contact")
+        try:
+            with transaction.atomic():
+                # Имя разделяем на first_name и last_name (если возможно)
+                full_name = contact_data.get("full_name", "")
+                parts = full_name.strip().split(" ", 1)
+                first_name = parts[0]
+                last_name = parts[1] if len(parts) > 1 else ""
+                order = Order.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=contact_data.get("email", ""),
+                    phone=contact_data.get("phone", ""),
+                    address=(address_data.get("city", "") + ", " + address_data.get("address_line", "")).strip(", "),
+                    comment=address_data.get("comment", ""),
+                )
+                # Для каждого товара в корзине создаём позицию заказа
+                for cart_item in cart:
+                    OrderItem.objects.create(
+                        order=order,
+                        product=cart_item["variant"].product,
+                        variant=cart_item["variant"],
+                        price=cart_item["price"],
+                        quantity=cart_item["quantity"],
+                    )
+        except Exception as e:
+            messages.error(request, f"Ошибка оформления заказа: {e!s}")
+            return redirect("cart:detail")
         cart.clear()
         for key in (CHECKOUT_CONTACT_KEY, CHECKOUT_ADDRESS_KEY):
             if key in request.session:

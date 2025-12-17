@@ -1,40 +1,85 @@
 {% extends 'base.html' %}
 
-{% block title %}История заказов - MEBELHUB{% endblock %}
+{% block title %}Мои заказы - MEBELHUB{% endblock %}
 
 {% block content %}
 <section class="container py-5">
-    <div class="row">
-        <div class="col-12 mb-4">
-            <h1 class="h4">Мои заказы</h1>
-            <p class="text-muted mb-0">Здесь будет история ваших заказов.</p>
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h4 mb-2">Мои заказы</h1>
+            <p class="text-muted mb-0">Здесь отображаются все ваши оформленные заказы.</p>
         </div>
     </div>
 
     {% if orders %}
-        <!-- Здесь в будущем появится список реальных заказов -->
+    <div class="row gy-3">
+        {% for order in orders %}
+        <div class="col-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+                        <div class="mb-2 mb-md-0">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge bg-secondary">#{{ order.id }}</span>
+                                <span class="text-muted small">{{ order.created|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            <div class="fw-semibold mt-1">{{ order.get_status_display }}</div>
+                        </div>
+                        <div class="text-md-end">
+                            <div class="fw-semibold">Итого: {{ order.get_total_cost|floatformat:0 }} ₽</div>
+                            <div class="text-muted small">
+                                Способ: 
+                                {% if order.delivery_method == "pickup" %}
+                                    Самовывоз
+                                {% else %}
+                                    Доставка курьером
+                                {% endif %}
+                            </div>
+                            {% if order.delivery_method == "courier" %}
+                            <div class="text-muted small">
+                                {{ order.city }}{% if order.address_line %}, {{ order.address_line }}{% endif %}
+                                {% if order.postal_code %} ({{ order.postal_code }}){% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="list-group list-group-flush">
+                        {% for item in order.items.all %}
+                        <div class="list-group-item px-0 py-2">
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
+                                <div class="me-sm-3">
+                                    <div class="fw-semibold">
+                                        <a href="{% url 'catalog:product_detail' product_slug=item.product.slug %}" class="link-body-emphasis text-decoration-none">
+                                            {{ item.product.name }}
+                                        </a>
+                                    </div>
+                                    {% if item.variant %}
+                                    <div class="text-muted small">Вариант: {{ item.variant }}</div>
+                                    {% endif %}
+                                    <div class="text-muted small">Количество: {{ item.quantity }}</div>
+                                </div>
+                                <div class="text-sm-end mt-2 mt-sm-0">
+                                    <div class="small text-muted">Цена: {{ item.price|floatformat:0 }} ₽</div>
+                                    <div class="fw-semibold">Сумма: {{ item.get_cost|floatformat:0 }} ₽</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
     {% else %}
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="bi bi-bag-x text-muted" style="font-size: 3rem;"></i>
-                    <h2 class="h5 mt-3 mb-2">У вас ещё нет заказов</h2>
-                    <p class="text-muted mb-4">
-                        Добавьте товары в корзину и оформите первый заказ.
-                    </p>
-                    <a href="{% url 'catalog:catalog' %}" class="btn btn-primary">
-                        Перейти в каталог
-                    </a>
-                </div>
+            <div class="alert alert-info mb-0">
+                Заказов пока нет. Добавьте товары в корзину и оформите первый заказ.
             </div>
         </div>
     </div>
     {% endif %}
 </section>
 {% endblock %}
-
-
-
-
-
