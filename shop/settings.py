@@ -137,14 +137,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
 # Media files (User uploaded files)
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Auth settings
@@ -183,6 +183,29 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # Reverse proxy (Nginx)
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CSRF / Security (prod)
+# Для продакшна задайте домены/https-параметры через .env:
+# - DJANGO_CSRF_TRUSTED_ORIGINS=https://example.com,https://www.example.com
+# - DJANGO_SECURE_SSL_REDIRECT=True
+# - DJANGO_SECURE_HSTS_SECONDS=31536000
+CSRF_TRUSTED_ORIGINS = [
+    s.strip()
+    for s in env('DJANGO_CSRF_TRUSTED_ORIGINS', default='').split(',')
+    if s.strip()
+]
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = env.bool('DJANGO_SESSION_COOKIE_SECURE', default=True)
+    CSRF_COOKIE_SECURE = env.bool('DJANGO_CSRF_COOKIE_SECURE', default=True)
+    SECURE_SSL_REDIRECT = env.bool('DJANGO_SECURE_SSL_REDIRECT', default=True)
+
+    SECURE_HSTS_SECONDS = env.int('DJANGO_SECURE_HSTS_SECONDS', default=0)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
+    SECURE_HSTS_PRELOAD = env.bool('DJANGO_SECURE_HSTS_PRELOAD', default=False)
+
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
 
 # Django REST Framework
 REST_FRAMEWORK = {
