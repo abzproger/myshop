@@ -1,7 +1,29 @@
 __pycache__/
 *.pyc
 .env
+.env.*
 .venv/
 build/
 dist/
 *.sqlite3
+
+# IDE
+.idea/
+.vscode/
+
+# OS junk
+Thumbs.db
+Desktop.ini
+
+# Logs / runtime artifacts
+*.log
+celerybeat-schedule
+
+# Django collected static & uploads (should not be committed)
+staticfiles/
+media/
+
+# Local artifacts
+.pytest_cache/
+htmlcov/
+.coverage

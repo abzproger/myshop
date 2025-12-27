@@ -1,0 +1,44 @@
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Test / tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# VCS / IDE
+.git/
+.idea/
+.vscode/
+
+# OS junk
+Thumbs.db
+Desktop.ini
+
+# Secrets / local env
+.env
+.env.*
+
+# Logs
+*.log
+
+# User uploads / runtime artifacts (should be volumes in Docker)
+media/
+
+# Django collectstatic output (if present)
+staticfiles/
+
+# Python packaging artifacts
+*.egg-info/
+dist/
+build/
+
