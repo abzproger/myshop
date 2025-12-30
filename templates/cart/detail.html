@@ -54,7 +54,9 @@
                                             <img src="{{ item.variant.images.first.image.url }}"
                                                  alt="{{ item.variant.product.name }}"
                                                  class="me-2"
-                                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;">
+                                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;"
+                                                 loading="lazy"
+                                                 decoding="async">
                                             {% endif %}
                                             <div>
                                                 <a href="{% url 'catalog:product_detail' item.variant.product.slug %}?variant={{ item.variant.id }}"

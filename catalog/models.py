@@ -1,8 +1,11 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from django.core.files.base import ContentFile
 from decimal import Decimal
+from io import BytesIO
 import os
+from PIL import Image, ImageOps
 
 # Create your models here.
 def upload_to(instance, filename):
@@ -224,6 +227,68 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"{self.variant} (Фото {self.pk})"
+
+    def save(self, *args, **kwargs):
+        """
+        Оптимизирует изображение при сохранении (resize + exif transpose + webp).
+
+        Это снижает вес страниц каталога/карточки товара при большом количестве картинок.
+        """
+        old_name = None
+        if self.pk:
+            old_name = (
+                ProductImage.objects.filter(pk=self.pk)
+                .values_list("image", flat=True)
+                .first()
+            )
+
+        if self.image and getattr(self.image, "file", None):
+            try:
+                # Важно: исправляем поворот по EXIF (часто на фото с телефона)
+                img = Image.open(self.image)
+                img = ImageOps.exif_transpose(img)
+
+                # GIF/анимации не трогаем (чтобы не ломать)
+                if (img.format or "").upper() != "GIF":
+                    max_side = 1600
+                    img.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
+
+                    has_alpha = (
+                        img.mode in ("RGBA", "LA")
+                        or (img.mode == "P" and "transparency" in img.info)
+                    )
+                    if has_alpha:
+                        img = img.convert("RGBA")
+                    else:
+                        img = img.convert("RGB")
+
+                    buf = BytesIO()
+                    img.save(
+                        buf,
+                        format="WEBP",
+                        quality=82,
+                        method=6,
+                        alpha_quality=80,
+                    )
+                    buf.seek(0)
+
+                    base, _ext = os.path.splitext(self.image.name)
+                    new_name = f"{base}.webp"
+                    self.image.save(new_name, ContentFile(buf.getvalue()), save=False)
+            except Exception:
+                # Не падаем из-за проблем с конкретным файлом
+                pass
+
+        super().save(*args, **kwargs)
+
+        # Если изменили имя файла (например jpg -> webp) — удаляем старый, чтобы не копить мусор
+        if old_name and old_name != self.image.name:
+            try:
+                storage = self.image.storage
+                if storage.exists(old_name):
+                    storage.delete(old_name)
+            except Exception:
+                pass
 
 class Attribute(models.Model):
     name = models.CharField(max_length=100, verbose_name="Название характеристики")

@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
     .product-hero {
-        background: linear-gradient(135deg, #3a2b20 0%, #1a120b 100%);
+        background: linear-gradient(135deg, #040404 0%, #000000 100%);
         color: white;
         padding: 40px 0;
         margin-bottom: 30px;
@@ -33,11 +33,11 @@
         transition: all 0.3s ease;
     }
     .thumbnail:hover {
-        border-color: #3a2b20;
+        border-color: #000000;
         transform: scale(1.05);
     }
     .thumbnail.active {
-        border-color: #3a2b20;
+        border-color: #000000;
     }
     .price-section {
         background: #f8f9fa;
@@ -54,11 +54,11 @@
         cursor: pointer;
     }
     .variant-card:hover {
-        border-color: #3a2b20;
+        border-color: #000000;
         box-shadow: 0 5px 15px rgba(58, 43, 32, 0.35);
     }
     .variant-card.selected {
-        border-color: #3a2b20;
+        border-color: #000000;
         background: #f0f4ff;
     }
     .attribute-table {
@@ -109,6 +109,9 @@
                      src="{{ main_image.image.url }}" 
                      alt="{{ product.name }}" 
                      class="main-image"
+                     loading="eager"
+                     fetchpriority="high"
+                     decoding="async"
                      onclick="openImageModal(this.src)">
                 
                 <div class="d-flex gap-2 flex-wrap">
@@ -116,6 +119,8 @@
                     <img src="{{ image.image.url }}" 
                          alt="{{ product.name }}" 
                          class="thumbnail {% if forloop.first %}active{% endif %}"
+                         loading="lazy"
+                         decoding="async"
                          onclick="changeMainImage(this.src, this)"
                          data-full="{{ image.image.url }}">
                     {% endfor %}

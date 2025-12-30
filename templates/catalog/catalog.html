@@ -61,7 +61,7 @@
     }
     .category-link:hover {
         background: #e9ecef;
-        color: #3a2b20;
+        color: #000000;
     }
     .category-link.active {
         background: linear-gradient(135deg, #3a2b20 0%, #1a120b 100%);
@@ -117,10 +117,7 @@
                 
                 <!-- Поиск -->
                 <div class="search-box mb-4">
-                    <form method="get" action="{% url 'catalog:catalog' %}">
-                        {% if selected_category %}
-                            <input type="hidden" name="category" value="{{ selected_category.slug }}">
-                        {% endif %}
+                    <form method="get" action="{% if selected_category %}{% url 'catalog:catalog_by_category' selected_category.slug %}{% else %}{% url 'catalog:catalog' %}{% endif %}">
                         <input type="text" 
                                class="form-control" 
                                name="search" 
@@ -185,10 +182,9 @@
                     </h5>
                 </div>
                 <div>
-                    <form method="get" class="d-inline">
-                        {% if selected_category %}
-                            <input type="hidden" name="category" value="{{ selected_category.slug }}">
-                        {% endif %}
+                    <form method="get"
+                          action="{% if selected_category %}{% url 'catalog:catalog_by_category' selected_category.slug %}{% else %}{% url 'catalog:catalog' %}{% endif %}"
+                          class="d-inline">
                         {% if search_query %}
                             <input type="hidden" name="search" value="{{ search_query }}">
                         {% endif %}
@@ -202,6 +198,7 @@
             </div>
             
             <!-- Сетка товаров -->
+            {# variants передаётся и в старом варианте (QuerySet), и в новом (list с пагинацией) #}
             {% if variants %}
             <div class="row g-4">
                 {% for variant in variants %}
@@ -215,7 +212,9 @@
                         {% if variant.images.first %}
                         <img src="{{ variant.images.first.image.url }}" 
                              class="card-img-top product-image" 
-                             alt="{{ variant }}">
+                             alt="{{ variant }}"
+                             loading="lazy"
+                             decoding="async">
                         {% else %}
                         <div class="card-img-top bg-light d-flex align-items-center justify-content-center product-image">
                             <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
@@ -275,6 +274,53 @@
                 </div>
                 {% endfor %}
             </div>
+
+            <!-- Пагинация -->
+            {% if page_obj and page_obj.paginator.num_pages > 1 %}
+            <nav class="mt-4" aria-label="Пагинация каталога">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                        {% if page_obj.has_previous %}
+                            <a class="page-link"
+                               href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">
+                                Назад
+                            </a>
+                        {% else %}
+                            <span class="page-link" aria-disabled="true" tabindex="-1">Назад</span>
+                        {% endif %}
+                    </li>
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active" aria-current="page">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if querystring %}&{{ querystring }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if querystring %}&{{ querystring }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% elif num == page_obj.number|add:-3 or num == page_obj.number|add:3 %}
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                        {% if page_obj.has_next %}
+                            <a class="page-link"
+                               href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">
+                                Вперёд
+                            </a>
+                        {% else %}
+                            <span class="page-link" aria-disabled="true">Вперёд</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
             {% else %}
             <!-- Пустое состояние -->
             <div class="text-center py-5">

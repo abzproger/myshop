@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
+from django.core.paginator import Paginator
 from .models import Category, ProductVariant, Product, AttributeValue, ContactMessage
 from .forms import ContactForm
 
@@ -19,9 +20,11 @@ def index(request):
         )
         cache.set('index_categories', categories, 60 * 60)
 
-    # Популярные товары (активные варианты с изображениями) — кэшируем результат
+    # Популярные товары (активные варианты) — кэшируем результат
     # сортировки по просмотрам на 5 минут.
-    featured_products = cache.get('index_featured_products')
+    featured_limit = 4
+    featured_cache_key = f"index_featured_products:{featured_limit}"
+    featured_products = cache.get(featured_cache_key)
     if featured_products is None:
         variants_qs = ProductVariant.objects.filter(
             is_active=True,
@@ -35,8 +38,8 @@ def index(request):
             return cache.get(key, 0) or 0
 
         variants_sorted = sorted(variants, key=get_views, reverse=True)
-        featured_products = variants_sorted[:12]
-        cache.set('index_featured_products', featured_products, 5 * 60)
+        featured_products = variants_sorted[:featured_limit]
+        cache.set(featured_cache_key, featured_products, 5 * 60)
     
     context = {
         'categories': categories,
@@ -104,6 +107,23 @@ def contacts(request):
 
 def catalog(request, category_slug=None):
     """Страница каталога товаров"""
+    # Поддержка фильтра категории через querystring:
+    # /catalog/?category=<slug>
+    # (исторически формы на странице могли отправлять category в GET).
+    category_slug_from_get = False
+    if not category_slug:
+        category_slug = (request.GET.get("category") or "").strip() or None
+        category_slug_from_get = bool(category_slug)
+    else:
+        # Канонизация URL: если категория уже задана в пути (/catalog/<slug>/),
+        # параметр ?category=<slug> из querystring избыточен и может приводить
+        # к "плавающему" поведению при разных вариантах формирования ссылок.
+        if "category" in request.GET:
+            qs = request.GET.copy()
+            qs.pop("category", None)
+            querystring = qs.urlencode()
+            return redirect(f"{request.path}?{querystring}" if querystring else request.path)
+
     # Получаем все категории для фильтра (почти статичные) — кэшируем на 1 час
     categories = cache.get('catalog_root_categories')
     if categories is None:
@@ -119,7 +139,17 @@ def catalog(request, category_slug=None):
     # Фильтрация по категории
     selected_category = None
     if category_slug:
-        selected_category = get_object_or_404(Category, slug=category_slug)
+        # Если категория пришла из querystring и slug невалидный —
+        # не падаем 404, а считаем, что фильтра по категории нет.
+        if category_slug_from_get:
+            selected_category = Category.objects.filter(slug=category_slug).first()
+            if not selected_category:
+                category_slug = None
+
+        if category_slug and selected_category is None:
+            selected_category = get_object_or_404(Category, slug=category_slug)
+
+    if selected_category:
         # Находим все дочерние категории (многоуровнево), чтобы показывать товары
         # как из выбранной категории, так и из её подкатегорий.
         category_ids = [selected_category.id]
@@ -166,10 +196,34 @@ def catalog(request, category_slug=None):
     
     # Подсчет товаров
     total_count = variants.count()
+
+    # Пагинация
+    per_page = 12
+    try:
+        per_page = int(request.GET.get("per_page", per_page))
+    except (TypeError, ValueError):
+        per_page = 12
+    # Простая защита от слишком больших значений (чтобы не уронить страницу)
+    per_page = max(1, min(per_page, 48))
+
+    paginator = Paginator(variants, per_page)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    # Чтобы ссылки пагинации сохраняли текущие фильтры/поиск/сортировку
+    qs = request.GET.copy()
+    qs.pop("page", None)
+    # Если категория в пути — не тащим её дубль в querystring
+    if category_slug and not category_slug_from_get:
+        qs.pop("category", None)
+    querystring = qs.urlencode()
     
     context = {
         'categories': categories,
-        'variants': variants,
+        'variants': page_obj.object_list,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'querystring': querystring,
         'selected_category': selected_category,
         'search_query': search_query,
         'sort_by': sort_by,
