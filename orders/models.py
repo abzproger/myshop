@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from catalog.models import Product, ProductVariant
+from decimal import Decimal
 
 class Order(models.Model):
     user = models.ForeignKey(
@@ -37,7 +38,11 @@ class Order(models.Model):
         return f"Заказ #{self.id} от {self.first_name} {self.last_name or ''}".strip()
 
     def get_total_cost(self):
-        return sum(item.get_cost() for item in self.items.all())
+        # Защита от "битых" позиций (например, если у позиции нет цены).
+        total = Decimal("0.00")
+        for item in self.items.all():
+            total += item.get_cost()
+        return total
 
 
 class OrderItem(models.Model):
@@ -55,4 +60,8 @@ class OrderItem(models.Model):
         return f"{self.product} x{self.quantity}"
 
     def get_cost(self):
-        return self.price * self.quantity
+        # В идеале price всегда не NULL (DecimalField), но на практике в базе
+        # могут встретиться старые/битые данные. Не валим админку — считаем 0.
+        price = self.price if self.price is not None else Decimal("0.00")
+        qty = self.quantity if self.quantity is not None else 0
+        return price * qty

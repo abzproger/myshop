@@ -6,8 +6,25 @@
 <section class="container py-5">
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="h4 mb-2">Мои заказы</h1>
-            <p class="text-muted mb-0">Здесь отображаются все ваши оформленные заказы.</p>
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'catalog:index' %}" class="text-decoration-none">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'users:profile' %}" class="text-decoration-none">Профиль</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Мои заказы</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                <div>
+                    <h1 class="h4 mb-1">Мои заказы</h1>
+                    <p class="text-muted mb-0">Здесь отображаются все ваши оформленные заказы.</p>
+                </div>
+                <div class="text-md-end">
+                    <a class="btn btn-sm btn-outline-dark" href="{% url 'catalog:catalog' %}">
+                        <i class="bi bi-bag"></i> В каталог
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -23,29 +40,44 @@
                                 <span class="badge bg-secondary">#{{ order.id }}</span>
                                 <span class="text-muted small">{{ order.created|date:"d.m.Y H:i" }}</span>
                             </div>
-                            <div class="fw-semibold mt-1">{{ order.get_status_display }}</div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                                {% if order.status == "pending" %}
+                                    <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                                {% elif order.status == "processing" %}
+                                    <span class="badge bg-primary">{{ order.get_status_display }}</span>
+                                {% elif order.status == "shipped" %}
+                                    <span class="badge bg-warning text-dark">{{ order.get_status_display }}</span>
+                                {% elif order.status == "delivered" %}
+                                    <span class="badge bg-success">{{ order.get_status_display }}</span>
+                                {% elif order.status == "cancelled" %}
+                                    <span class="badge bg-danger">{{ order.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                                {% endif %}
+
+                                {% if order.paid %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Оплачен</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Не оплачен</span>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="text-md-end">
                             <div class="fw-semibold">Итого: {{ order.get_total_cost|floatformat:0 }} ₽</div>
-                            <div class="text-muted small">
-                                Способ: 
-                                {% if order.delivery_method == "pickup" %}
-                                    Самовывоз
-                                {% else %}
-                                    Доставка курьером
-                                {% endif %}
-                            </div>
-                            {% if order.delivery_method == "courier" %}
-                            <div class="text-muted small">
-                                {{ order.city }}{% if order.address_line %}, {{ order.address_line }}{% endif %}
-                                {% if order.postal_code %} ({{ order.postal_code }}){% endif %}
-                            </div>
+                            {% if order.address %}
+                            <div class="text-muted small">{{ order.address }}</div>
                             {% endif %}
+                            <div class="mt-2">
+                                <a class="btn btn-sm btn-outline-dark" href="{% url 'orders:detail' order_id=order.id %}">
+                                    Подробнее
+                                </a>
+                            </div>
                         </div>
                     </div>
 
+                    {% with items=order.items.all %}
                     <div class="list-group list-group-flush">
-                        {% for item in order.items.all %}
+                        {% for item in items|slice:":3" %}
                         <div class="list-group-item px-0 py-2">
                             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
                                 <div class="me-sm-3">
@@ -66,7 +98,15 @@
                             </div>
                         </div>
                         {% endfor %}
+                        {% if items|length > 3 %}
+                        <div class="list-group-item px-0 py-2">
+                            <a class="text-decoration-none" href="{% url 'orders:detail' order_id=order.id %}">
+                                Показать все позиции ({{ items|length }})
+                            </a>
+                        </div>
+                        {% endif %}
                     </div>
+                    {% endwith %}
                 </div>
             </div>
         </div>
@@ -75,11 +115,30 @@
     {% else %}
     <div class="row">
         <div class="col-12">
-            <div class="alert alert-info mb-0">
-                Заказов пока нет. Добавьте товары в корзину и оформите первый заказ.
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-receipt text-muted" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold mb-1">Заказов пока нет</div>
+                            <div class="text-muted mb-3">
+                                Добавьте товары в корзину и оформите первый заказ — здесь появится история.
+                            </div>
+                            <a class="btn btn-primary" href="{% url 'catalog:catalog' %}">
+                                Перейти в каталог
+                            </a>
+                            <a class="btn btn-outline-dark ms-2" href="{% url 'cart:detail' %}">
+                                Открыть корзину
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     {% endif %}
+
 </section>
 {% endblock %}

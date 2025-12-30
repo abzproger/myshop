@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -142,6 +143,17 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# Static files serving (works even behind Gunicorn when you open :8000 directly)
+# Django 4.2+ prefers STORAGES; Django 6 uses it as the main configuration point.
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+}
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'

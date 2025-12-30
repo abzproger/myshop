@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказ #{{ order.id }} - MEBELHUB{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'catalog:index' %}" class="text-decoration-none">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'orders:history' %}" class="text-decoration-none">Мои заказы</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Заказ #{{ order.id }}</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                <div>
+                    <h1 class="h4 mb-1">Заказ #{{ order.id }}</h1>
+                    <div class="text-muted small">
+                        Создан: {{ order.created|date:"d.m.Y H:i" }}
+                        {% if order.updated %} • Обновлён: {{ order.updated|date:"d.m.Y H:i" }}{% endif %}
+                    </div>
+                </div>
+                <div class="text-md-end">
+                    {% if order.status == "pending" %}
+                        <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                    {% elif order.status == "processing" %}
+                        <span class="badge bg-primary">{{ order.get_status_display }}</span>
+                    {% elif order.status == "shipped" %}
+                        <span class="badge bg-warning text-dark">{{ order.get_status_display }}</span>
+                    {% elif order.status == "delivered" %}
+                        <span class="badge bg-success">{{ order.get_status_display }}</span>
+                    {% elif order.status == "cancelled" %}
+                        <span class="badge bg-danger">{{ order.get_status_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                    {% endif %}
+
+                    {% if order.paid %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">Оплачен</span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1">Не оплачен</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="fw-semibold">Состав заказа</div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Товар</th>
+                                    <th class="text-end">Цена</th>
+                                    <th class="text-end">Кол-во</th>
+                                    <th class="text-end pe-3">Сумма</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                <tr>
+                                    <td class="ps-3">
+                                        <div class="fw-semibold">
+                                            <a href="{% url 'catalog:product_detail' product_slug=item.product.slug %}" class="text-decoration-none link-body-emphasis">
+                                                {{ item.product.name }}
+                                            </a>
+                                        </div>
+                                        {% if item.variant %}
+                                        <div class="text-muted small">Вариант: {{ item.variant }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">{{ item.price|floatformat:0 }} ₽</td>
+                                    <td class="text-end">{{ item.quantity }}</td>
+                                    <td class="text-end pe-3 fw-semibold">{{ item.get_cost|floatformat:0 }} ₽</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td class="ps-3 fw-semibold" colspan="3">Итого</td>
+                                    <td class="text-end pe-3 fw-semibold">{{ order.get_total_cost|floatformat:0 }} ₽</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <div class="fw-semibold">Доставка и контакты</div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">Получатель</div>
+                        <div class="fw-semibold">
+                            {{ order.first_name }}{% if order.last_name %} {{ order.last_name }}{% endif %}
+                        </div>
+                        <div class="text-muted small">{{ order.phone }}</div>
+                        <div class="text-muted small">{{ order.email }}</div>
+                    </div>
+
+                    {% if order.address %}
+                    <div>
+                        <div class="text-muted small mb-1">Адрес</div>
+                        <div>{{ order.address }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if order.comment %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="fw-semibold">Комментарий</div>
+                </div>
+                <div class="card-body">
+                    <div class="text-muted">{{ order.comment|linebreaksbr }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+

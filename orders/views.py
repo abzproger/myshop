@@ -1,8 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.db.models import Q
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
 
 from cart.cart import Cart
+from .models import Order
 from .forms import CheckoutContactForm, CheckoutAddressForm
 
 
@@ -12,14 +15,58 @@ CHECKOUT_ADDRESS_KEY = "checkout_address"
 
 @login_required
 def order_history(request):
-    """Страница истории заказов пользователя.
+    """История заказов текущего пользователя."""
+    user = request.user
 
-    Пока заказов нет — выводится заглушка.
-    В будущем сюда можно подтянуть реальные модели заказов.
-    """
-    # Заглушка: список заказов пустой
-    orders = []
+    # Если по каким-то причинам старые заказы создавались без user (NULL),
+    # но email совпадает — привязываем их к аккаунту и показываем в истории.
+    if user.email:
+        Order.objects.filter(user__isnull=True, email__iexact=user.email).update(user=user)
+
+    orders = (
+        Order.objects.filter(
+            Q(user=user)
+            | (Q(user__isnull=True) & Q(email__iexact=user.email))  # на всякий случай, если update выше не сработал
+        )
+        .prefetch_related("items", "items__product", "items__variant")
+        .only("id", "created", "status", "paid", "address", "user", "email")
+    )
     return render(request, "orders/history.html", {"orders": orders})
+
+
+@login_required
+def order_detail(request, order_id: int):
+    """Детали заказа. Доступны только владельцу."""
+    user = request.user
+    order = get_object_or_404(
+        Order.objects.prefetch_related("items", "items__product", "items__variant").only(
+            "id",
+            "created",
+            "updated",
+            "status",
+            "paid",
+            "address",
+            "user",
+            "first_name",
+            "last_name",
+            "phone",
+            "email",
+            "comment",
+        ),
+        id=order_id,
+    )
+
+    # Проверка прав: владелец заказа или "старый" заказ по тому же email (если user был NULL).
+    if order.user_id == user.id:
+        pass
+    elif order.user_id is None and user.email and (order.email or "").lower() == user.email.lower():
+        # Привяжем заказ к аккаунту, чтобы история начала отображаться корректно.
+        order.user = user
+        order.save(update_fields=["user"])
+    else:
+        raise Http404
+
+    return render(request, "orders/detail.html", {"order": order})
 
 
 @login_required
@@ -139,7 +186,7 @@ def checkout_confirm(request):
                 first_name = parts[0]
                 last_name = parts[1] if len(parts) > 1 else ""
                 order = Order.objects.create(
-                    user=request.user if request.user.is_authenticated else None,
+                    user=request.user,
                     first_name=first_name,
                     last_name=last_name,
                     email=contact_data.get("email", ""),
