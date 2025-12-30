@@ -1,76 +1,153 @@
-# myshop
+# MyShop (Django)
 
-Интернет-магазин на Django с PostgreSQL, Redis, Celery и Nginx.
+Интернет‑магазин на **Django 6** с **PostgreSQL**, **Redis**, **Celery**, **Gunicorn** и **Nginx**.
+
+## Что внутри
+- **Каталог**: категории, товары, варианты товара, изображения (оптимизация при сохранении).
+- **Корзина**: сессии + UI.
+- **Заказы**: оформление (3 шага) + история заказов + детальная страница заказа.
+- **Админка**: заказы и позиции заказа с inline‑позициями.
+- **Статика**:
+  - Bootstrap хранится **локально** в `static/vendor/bootstrap/`
+  - WhiteNoise включён, чтобы `/static/` работал даже если заходить на `:8000` напрямую
 
 ## Требования
-- Python 3.12
-- Poetry
-- Docker/Docker Compose (для Postgres/Redis/Nginx)
+- **Python 3.12+**
+- **Poetry**
+- **Docker + Docker Compose** (рекомендуемый способ запуска)
 
-## Быстрый старт (локально)
-1) Установите зависимости (пакетный режим Poetry отключён):
+## Быстрый старт (Docker — рекомендовано)
+1) Создайте `.env` из примера:
+
+```bash
+# Linux/macOS
+cp env.example .env
+```
+
+```powershell
+# Windows PowerShell
+copy env.example .env
+```
+
+2) Отредактируйте `.env` и **обязательно** задайте:
+- `DJANGO_SECRET_KEY`
+- `DJANGO_ALLOWED_HOSTS` (например `127.0.0.1,localhost`)
+
+3) Поднимите проект:
+
+```bash
+docker compose up -d --build
+```
+
+4) Откройте:
+- **Сайт (через Nginx)**: `http://localhost/`
+- **Админка**: `http://localhost/admin/`
+
+> Можно открыть и `http://localhost:8000/` (напрямую Gunicorn) — статика тоже будет работать благодаря WhiteNoise, но в проде обычно ходят через Nginx.
+
+## Локальный запуск (Poetry + Docker для инфраструктуры)
+Подходит, если хочешь дебажить `runserver`, но БД/Redis держать в Docker.
+
+1) Установить зависимости:
+
 ```bash
 poetry install
 ```
-2) Создайте файл `.env` на основе примера:
-```bash
-# Linux/macOS: cp env.example .env
-# Windows PowerShell: copy env.example .env
-# Не забудьте подставить DJANGO_SECRET_KEY
-```
-3) Поднимите инфраструктуру (БД, Redis):
-```bash
-docker-compose up -d postgres redis
-```
-4) Запустите Django + Celery + Nginx через Docker (зависимости ставятся на этапе build):
-```bash
-docker-compose up --build -d web celery-worker celery-beat nginx
-```
-Сайт будет доступен на `http://localhost/` (через Nginx). Для отладки напрямую Django также остаётся `http://localhost:8000/`.
 
-## Переменные окружения (env.example)
-- `DJANGO_SECRET_KEY` — секретный ключ Django (обязательно поменять)
-- `DJANGO_DEBUG` — режим отладки (`True`/`False`)
-- `DJANGO_ALLOWED_HOSTS` — через запятую, например `127.0.0.1,localhost`
-- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT` — параметры БД
-- `REDIS_URL` — URL Redis (используется кэш)
-- `CELERY_BROKER_URL` — брокер Celery (по умолчанию Redis, см. `env.example`)
-- `CELERY_RESULT_BACKEND` — backend для результатов (по умолчанию Redis, см. `env.example`)
-- `CELERY_TASK_DEFAULT_QUEUE` — дефолтная очередь задач
-- `EMAIL_BACKEND` — backend отправки писем (по умолчанию консоль)
-- `DEFAULT_FROM_EMAIL` — адрес отправителя по умолчанию
+2) Поднять Postgres+Redis:
 
-## SMTP через Gmail
-Google больше не поддерживает “less secure apps”, поэтому самый простой вариант — **App Password**:
-- Включите 2FA в аккаунте Google
-- Создайте “App password” для почты
-- Пропишите в `.env`:
-  - `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`
-  - `EMAIL_HOST=smtp.gmail.com`
-  - `EMAIL_PORT=587`
-  - `EMAIL_USE_TLS=True`
-  - `EMAIL_HOST_USER=ваш@gmail.com`
-  - `EMAIL_HOST_PASSWORD=app_password`
+```bash
+docker compose up -d postgres redis
+```
+
+3) Прогнать миграции и статику:
+
+```bash
+poetry run python manage.py migrate
+poetry run python manage.py collectstatic --noinput
+```
+
+4) Запустить Django:
+
+```bash
+poetry run python manage.py runserver
+```
+
+## Переменные окружения (`.env`)
+Смотри `env.example`. Основные:
+- **Django**
+  - `DJANGO_SECRET_KEY`
+  - `DJANGO_DEBUG` (`True`/`False`)
+  - `DJANGO_ALLOWED_HOSTS` (через запятую)
+  - `DJANGO_CSRF_TRUSTED_ORIGINS` (для https/домена в проде)
+- **PostgreSQL**
+  - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`
+- **Redis / Celery**
+  - `REDIS_URL`
+  - `CELERY_BROKER_URL`
+  - `CELERY_RESULT_BACKEND`
+  - `CELERY_TASK_DEFAULT_QUEUE`
+- **Email**
+  - `EMAIL_BACKEND`
+  - `DEFAULT_FROM_EMAIL`
+
+## Создать суперпользователя
+
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+или локально:
+
+```bash
+poetry run python manage.py createsuperuser
+```
+
+## Заказы в админке
+В админке доступны:
+- **Orders → Orders** (заказы)
+- **Orders → Order items** (позиции заказа)
+
+В карточке заказа позиции отображаются inline.
+
+## Тестовые данные (сидинг каталога)
+Есть management command для наполнения каталога:
+
+```bash
+docker compose exec web python manage.py seed_products
+```
 
 ## Проверка Celery
-В Django shell (внутри контейнера `web`) выполните:
+
 ```bash
-docker-compose exec web python manage.py shell
->>> from catalog.tasks import ping
->>> ping.delay().get(timeout=10)
+docker compose exec web python manage.py shell
 ```
+
+```python
+from catalog.tasks import ping
+ping.delay().get(timeout=10)
+```
+
 Ожидаемый результат: `pong`.
 
-## Полезные команды
-- Создание суперпользователя: `poetry run python manage.py createsuperuser`
-- Сбор статики (прод): `poetry run python manage.py collectstatic`
+## Статика и Nginx
+- `STATIC_ROOT = staticfiles/` (результат `collectstatic`)
+- Nginx раздаёт:
+  - `/static/` из `./staticfiles`
+  - `/media/` из `./media`
 
-## Примечания
-- Poetry настроен с `package-mode = false`, поэтому проект не устанавливается как пакет; используется для управления зависимостями.
-- БД по умолчанию — PostgreSQL (см. переменные окружения в `env.example`).
+Конфиг: `nginx/conf.d/default.conf`
 
-## Nginx
-Конфиг Nginx лежит в `nginx/conf.d/default.conf` и в docker-compose монтируется в контейнер `nginx`.
-Он раздаёт:
-- `/static/` из `./staticfiles` (результат `collectstatic`)
-- `/media/` из `./media`
+## Troubleshooting
+### В админке/на сайте нет стилей
+- Открывай сайт через `http://localhost/` (Nginx).
+- Если заходишь на `http://localhost:8000/`, статика отдаётся WhiteNoise (встроено), но **после изменений** нужно пересобрать контейнер:
+
+```bash
+docker compose up -d --build
+```
+
+### `/static/admin/...` отдаёт 404
+Проверь:
+- `docker compose logs --tail 200 nginx`
+- что `collectstatic` отработал (в логах `web` будет `post-processed`)
