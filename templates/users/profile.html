@@ -39,9 +39,9 @@
                 <div class="card-body">
                     <h5 class="mb-3">Информация об аккаунте</h5>
                     <p class="mb-1"><strong>Имя пользователя:</strong> {{ user.username }}</p>
-                    <p class="mb-1"><strong>Email:</strong> {{ user.email|default:"не указан" }}</p>
+                    <p class="mb-1"><strong>Электронная почта:</strong> {{ user.email|default:"не указан" }}</p>
                     <p class="mb-1"><strong>Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y H:i" }}</p>
-                    <p class="mb-0"><strong>Last login:</strong> {{ user.last_login|default:"—"|date:"d.m.Y H:i" }}</p>
+                    <p class="mb-0"><strong>Последняя активность:</strong> {{ user.last_login|default:"—"|date:"d.m.Y H:i" }}</p>
                 </div>
             </div>
         </div>

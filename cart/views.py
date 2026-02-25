@@ -3,7 +3,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.urls import reverse
 from catalog.models import ProductVariant
-from .cart import Cart
+from .cart import Cart, CART_MAX_QUANTITY_PER_ITEM
 
 
 @require_POST
@@ -11,8 +11,7 @@ def cart_add(request, variant_id):
     cart = Cart(request)
     variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, product__is_active=True)
     quantity = int(request.POST.get("quantity", 1) or 1)
-    if quantity < 1:
-        quantity = 1
+    quantity = max(1, min(quantity, CART_MAX_QUANTITY_PER_ITEM))
 
     # Режим: перезаписать количество (для AJAX-обновления из корзины)
     override = request.POST.get("override") == "1"

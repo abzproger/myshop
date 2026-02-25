@@ -2,6 +2,8 @@ from decimal import Decimal
 from django.conf import settings
 from catalog.models import ProductVariant
 
+CART_MAX_QUANTITY_PER_ITEM = 20
+
 
 class Cart:
     """
@@ -28,6 +30,9 @@ class Cart:
 
     def add(self, variant: ProductVariant, quantity=1, override_quantity=False):
         variant_id = str(variant.id)
+        max_qty = getattr(settings, "CART_MAX_QUANTITY_PER_ITEM", CART_MAX_QUANTITY_PER_ITEM)
+        quantity = max(1, min(int(quantity), max_qty))
+
         if variant_id not in self._cart:
             # Фиксируем цену на момент добавления (без скидок, скидки можно считать при отображении)
             self._cart[variant_id] = {
@@ -37,7 +42,8 @@ class Cart:
         if override_quantity:
             self._cart[variant_id]["quantity"] = quantity
         else:
-            self._cart[variant_id]["quantity"] += quantity
+            new_qty = self._cart[variant_id]["quantity"] + quantity
+            self._cart[variant_id]["quantity"] = min(new_qty, max_qty)
         self.save()
 
     def remove(self, variant: ProductVariant):
