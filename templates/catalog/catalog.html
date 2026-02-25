@@ -231,9 +231,8 @@
                             <p class="card-text text-muted small mb-2">
                                 {% if variant.size %}<span class="badge bg-secondary">{{ variant.size }}</span>{% endif %}
                                 {% if variant.color %}<span class="badge bg-secondary">{{ variant.color }}</span>{% endif %}
-                                {% if variant.name and variant.name != variant.product.name %}
-                                    <span class="badge bg-info">{{ variant.name }}</span>
-                                {% endif %}
+
+                                <span class="badge bg-info ms-2">Артикул: {{variant.sku }}</span>
                             </p>
                             <div class="mt-auto">
                                 <div class="d-flex justify-content-between align-items-center mb-2">

@@ -40,7 +40,6 @@
         border-color: #000000;
     }
     .price-section {
-        background: #f8f9fa;
         padding: 25px;
         border-radius: 10px;
         margin-bottom: 20px;
@@ -136,16 +135,12 @@
         <!-- Информация о товаре -->
         <div class="col-lg-6">
             <h1 class="mb-3">{{ product.name }}</h1>
-            
-            <!-- Категория и артикул -->
+            <!-- артикул -->
             <div class="mb-3">
-                <a href="{% url 'catalog:catalog_by_category' product.category.slug %}" 
-                   class="badge bg-secondary text-decoration-none">
-                    {{ product.category.name }}
-                </a>
                 {% if selected_variant and selected_variant.sku %}
                 <span class="badge bg-info ms-2">Артикул: {{ selected_variant.sku }}</span>
                 {% endif %}
+                
             </div>
             
             <!-- Описание -->
@@ -164,23 +159,21 @@
                         {% if variant.get_price_with_discount < variant.get_base_price %}
                         <div>
                             <span class="text-decoration-line-through text-muted h5 mb-0">
-                                {{ variant.get_base_price|floatformat:0 }} руб.
+                                {{ variant.get_base_price|floatformat:0 }} ₽
                             </span>
-                            <span class="display-6 fw-bold text-danger ms-3">
-                                {{ variant.get_price_with_discount|floatformat:0 }} руб.
+                            <span class="display-6 fw-bold text-danger ms-3"> 
+                                {{ variant.get_price_with_discount|floatformat:0 }} ₽
                             </span>
                         </div>
                         {% else %}
                         <span class="display-6 fw-bold">
-                            {{ variant.get_base_price|floatformat:0 }} руб.
+                            {{ variant.get_base_price|floatformat:0 }} ₽
                         </span>
                         {% endif %}
                     </div>
                     {% if variant.get_discount_amount > 0 %}
-                    <div class="alert alert-success mb-0">
                         <i class="bi bi-tag-fill"></i> 
-                        Ваша скидка: <strong>{{ variant.get_discount_amount|floatformat:0 }} руб.</strong>
-                    </div>
+                        Ваша скидка: <strong>{{ variant.get_discount_amount|floatformat:0 }} ₽</strong>
                     {% endif %}
                     {% endwith %}
                 {% else %}
@@ -210,11 +203,11 @@
                             <div class="text-end">
                                 {% if variant.get_price_with_discount < variant.get_base_price %}
                                 <div>
-                                    <span class="text-decoration-line-through text-muted small">{{ variant.get_base_price|floatformat:0 }} руб.</span>
-                                    <span class="fw-bold text-danger ms-2">{{ variant.get_price_with_discount|floatformat:0 }} руб.</span>
+                                    <span class="text-decoration-line-through text-muted small">{{ variant.get_base_price|floatformat:0 }} ₽</span>
+                                    <span class="fw-bold text-danger ms-2">{{ variant.get_price_with_discount|floatformat:0 }} ₽</span>
                                 </div>
                                 {% else %}
-                                <span class="fw-bold">{{ variant.get_base_price|floatformat:0 }} руб.</span>
+                                <span class="fw-bold">{{ variant.get_base_price|floatformat:0 }} ₽</span>
                                 {% endif %}
                                 {% if variant.stock > 0 %}
                                 <small class="text-success d-block">В наличии ({{ variant.stock }} шт.)</small>
@@ -322,7 +315,7 @@
                         </a>
                     </h6>
                     <p class="card-text">
-                        <span class="fw-bold">{{ variant.get_price_with_discount|floatformat:0 }} руб.</span>
+                        <span class="fw-bold">{{ variant.get_price_with_discount|floatformat:0 }} ₽</span>
                     </p>
                     <a href="{% url 'catalog:product_detail' variant.product.slug %}" class="btn btn-sm btn-outline-primary w-100">
                         Подробнее
