@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -5,7 +7,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 
 from cart.cart import Cart
-from .models import Order
+from .models import Order, OrderItem, generate_guest_token
 from .forms import CheckoutContactForm, CheckoutAddressForm
 
 
@@ -36,7 +38,7 @@ def order_history(request):
 
 @login_required
 def order_detail(request, order_id: int):
-    """Детали заказа. Доступны только владельцу."""
+    """Детали заказа. Доступны владельцу. Гость смотрит заказ по ссылке (orders:guest_detail)."""
     user = request.user
     order = get_object_or_404(
         Order.objects.prefetch_related("items", "items__product", "items__variant").only(
@@ -56,20 +58,45 @@ def order_detail(request, order_id: int):
         id=order_id,
     )
 
-    # Проверка прав: владелец заказа или "старый" заказ по тому же email (если user был NULL).
-    if order.user_id == user.id:
-        pass
-    elif order.user_id is None and user.email and (order.email or "").lower() == user.email.lower():
-        # Привяжем заказ к аккаунту, чтобы история начала отображаться корректно.
-        order.user = user
-        order.save(update_fields=["user"])
-    else:
+    # Гостевой заказ — только через guest_detail с токеном
+    if order.user_id is None:
         raise Http404
 
-    return render(request, "orders/detail.html", {"order": order})
+    # Проверка прав: только владелец
+    if not user.is_authenticated or order.user_id != user.id:
+        raise Http404
+    # Привязка "старого" заказа по email к аккаунту
+    if user.email and (order.email or "").lower() == user.email.lower():
+        order.user = user
+        order.save(update_fields=["user"])
+
+    return render(request, "orders/detail.html", {"order": order, "is_guest": False})
 
 
-@login_required
+def order_guest_detail(request, order_id: int, token: str):
+    """Детали заказа для гостя по секретной ссылке (без входа)."""
+    order = get_object_or_404(
+        Order.objects.prefetch_related("items", "items__product", "items__variant").only(
+            "id",
+            "created",
+            "updated",
+            "status",
+            "paid",
+            "address",
+            "user",
+            "first_name",
+            "last_name",
+            "phone",
+            "email",
+            "comment",
+            "guest_access_token",
+        ),
+        id=order_id,
+        guest_access_token=token,
+    )
+    return render(request, "orders/detail.html", {"order": order, "is_guest": True})
+
+
 def checkout_contact(request):
     """Шаг 1: контактные данные."""
     cart = Cart(request)
@@ -112,7 +139,6 @@ def checkout_contact(request):
     )
 
 
-@login_required
 def checkout_address(request):
     """Шаг 2: адрес доставки."""
     cart = Cart(request)
@@ -147,7 +173,6 @@ def checkout_address(request):
     )
 
 
-@login_required
 def checkout_confirm(request):
     """Шаг 3: подтверждение заказа.
 
@@ -168,8 +193,6 @@ def checkout_confirm(request):
         return redirect("orders:checkout_address")
 
     if request.method == "POST":
-        # Собираем все необходимые данные
-        from orders.models import Order, OrderItem
         from django.db import transaction
         contact_data = request.session.get(CHECKOUT_CONTACT_KEY)
         address_data = request.session.get(CHECKOUT_ADDRESS_KEY)
@@ -180,13 +203,14 @@ def checkout_confirm(request):
             return redirect("orders:checkout_contact")
         try:
             with transaction.atomic():
-                # Имя разделяем на first_name и last_name (если возможно)
                 full_name = contact_data.get("full_name", "")
                 parts = full_name.strip().split(" ", 1)
                 first_name = parts[0]
                 last_name = parts[1] if len(parts) > 1 else ""
+                is_guest = not request.user.is_authenticated
                 order = Order.objects.create(
-                    user=request.user,
+                    user=request.user if request.user.is_authenticated else None,
+                    guest_access_token=generate_guest_token() if is_guest else None,
                     first_name=first_name,
                     last_name=last_name,
                     email=contact_data.get("email", ""),
@@ -194,7 +218,6 @@ def checkout_confirm(request):
                     address=(address_data.get("city", "") + ", " + address_data.get("address_line", "")).strip(", "),
                     comment=address_data.get("comment", ""),
                 )
-                # Для каждого товара в корзине создаём позицию заказа
                 for cart_item in cart:
                     OrderItem.objects.create(
                         order=order,
@@ -204,7 +227,8 @@ def checkout_confirm(request):
                         quantity=cart_item["quantity"],
                     )
         except Exception as e:
-            messages.error(request, f"Ошибка оформления заказа: {e!s}")
+            logging.exception("Ошибка оформления заказа: %s", e)
+            messages.error(request, "Ошибка оформления заказа. Пожалуйста, попробуйте позже или свяжитесь с нами.")
             return redirect("cart:detail")
         cart.clear()
         for key in (CHECKOUT_CONTACT_KEY, CHECKOUT_ADDRESS_KEY):
@@ -213,7 +237,9 @@ def checkout_confirm(request):
         request.session.modified = True
 
         messages.success(request, "Ваш заказ подтверждён! В ближайшее время мы с вами свяжемся.")
-        return redirect("orders:history")
+        if request.user.is_authenticated:
+            return redirect("orders:detail", order_id=order.id)
+        return redirect("orders:guest_detail", order_id=order.id, token=order.guest_access_token)
 
     return render(
         request,

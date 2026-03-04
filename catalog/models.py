@@ -4,8 +4,11 @@ from django.utils.text import slugify
 from django.core.files.base import ContentFile
 from decimal import Decimal
 from io import BytesIO
+import logging
 import os
 from PIL import Image, ImageOps
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 def upload_to(instance, filename):
@@ -60,7 +63,7 @@ class Category(models.Model):
     slug = models.SlugField(max_length=100, unique=True, verbose_name="Слаг")
     image = models.ImageField(upload_to=upload_to, blank=True, null=True, verbose_name="Изображение")
     description = models.TextField(blank=True, null=True, verbose_name="Описание")
-    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children', verbose_name="Родительская категория")
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children', db_index=True, verbose_name="Родительская категория")
 
     class Meta:
         verbose_name = "Категория"
@@ -83,7 +86,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")
     description = models.TextField(blank=True, null=True, verbose_name="Описание")
     stock = models.PositiveIntegerField(default=0, verbose_name="Остаток на складе")
-    is_active = models.BooleanField(default=True, verbose_name="Активен")
+    is_active = models.BooleanField(default=True, db_index=True, verbose_name="Активен")
 
     class Meta:
         verbose_name = "Товар"
@@ -140,7 +143,7 @@ class ProductVariant(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Цена варианта")
     stock = models.PositiveIntegerField(default=0, verbose_name="Остаток варианта")
     sku = models.CharField(max_length=50, unique=True, verbose_name="Артикул (SKU)")
-    is_active = models.BooleanField(default=True, verbose_name="Активен")
+    is_active = models.BooleanField(default=True, db_index=True, verbose_name="Активен")
 
     class Meta:
         verbose_name = "Вариант товара"
@@ -275,9 +278,8 @@ class ProductImage(models.Model):
                     base, _ext = os.path.splitext(self.image.name)
                     new_name = f"{base}.webp"
                     self.image.save(new_name, ContentFile(buf.getvalue()), save=False)
-            except Exception:
-                # Не падаем из-за проблем с конкретным файлом
-                pass
+            except Exception as e:
+                logger.warning("Не удалось оптимизировать изображение %s: %s", self.image.name, e)
 
         super().save(*args, **kwargs)
 
@@ -287,8 +289,8 @@ class ProductImage(models.Model):
                 storage = self.image.storage
                 if storage.exists(old_name):
                     storage.delete(old_name)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Не удалось удалить старое изображение %s: %s", old_name, e)
 
 class Attribute(models.Model):
     name = models.CharField(max_length=100, verbose_name="Название характеристики")
@@ -374,8 +376,8 @@ class Discount(models.Model):
         related_name='discounts',
         verbose_name="Вариант товара"
     )
-    start_date = models.DateTimeField(verbose_name="Дата начала")
-    end_date = models.DateTimeField(verbose_name="Дата окончания")
+    start_date = models.DateTimeField(verbose_name="Дата начала", db_index=True)
+    end_date = models.DateTimeField(verbose_name="Дата окончания", db_index=True)
     is_active = models.BooleanField(default=True, verbose_name="Активна")
     priority = models.PositiveIntegerField(
         default=0,
@@ -413,6 +415,24 @@ class Discount(models.Model):
         """Применяет скидку к цене и возвращает итоговую цену"""
         discount_amount = self.calculate_discount(price)
         return max(price - discount_amount, Decimal('0.00'))  # Цена не может быть отрицательной
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        # В зависимости от apply_to должно быть заполнено только одно целевое поле
+        if self.apply_to == self.APPLY_TO_CATEGORY:
+            if not self.category_id:
+                raise ValidationError({"category": "Укажите категорию для скидки на категорию."})
+            if self.product_id or self.variant_id:
+                raise ValidationError({"product": "Скидка на категорию не должна ссылаться на товар или вариант."})
+        elif self.apply_to == self.APPLY_TO_PRODUCT:
+            if not self.product_id:
+                raise ValidationError({"product": "Укажите товар для скидки на товар."})
+            if self.variant_id:
+                raise ValidationError({"variant": "Скидка на товар не должна ссылаться на вариант."})
+        elif self.apply_to == self.APPLY_TO_VARIANT:
+            if not self.variant_id:
+                raise ValidationError({"variant": "Укажите вариант для скидки на вариант."})
 
 
 class ContactMessage(models.Model):

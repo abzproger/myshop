@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.urls import reverse
@@ -21,8 +22,10 @@ def cart_add(request, variant_id):
 
     cart.add(variant=variant, quantity=quantity, override_quantity=override)
 
-    # Куда редиректить
-    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or reverse('cart:detail')
+    # Куда редиректить (проверяем на Open Redirect)
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or ""
+    if not next_url or not url_has_allowed_host_and_scheme(next_url, request.get_host()):
+        next_url = reverse("cart:detail")
 
     # Если запрос AJAX — возвращаем JSON
     if request.headers.get("x-requested-with") == "XMLHttpRequest":

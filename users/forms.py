@@ -56,9 +56,21 @@ class RussianUserCreationForm(UserCreationForm):
         help_text="Введите тот же пароль ещё раз для проверки.",
     )
 
+    email = forms.EmailField(
+        label="Электронная почта",
+        required=True,
+        widget=forms.EmailInput(
+            attrs={
+                "autocomplete": "email",
+                "class": "form-control",
+            }
+        ),
+        help_text="Нужна для восстановления доступа к аккаунту при утере пароля.",
+    )
+
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("username",)
+        fields = ("username", "email")
         help_texts = {
             "username": _(
                 "Обязательное поле. Не более 150 символов. "

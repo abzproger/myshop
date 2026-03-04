@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from .models import ContactMessage
 
 
@@ -47,6 +48,12 @@ class ContactForm(forms.ModelForm):
         self.fields['subject'].empty_label = "Выберите тему"
         self.fields['message'].label = "Сообщение"
         self.fields['consent'].widget.attrs.update({'class': 'form-check-input', 'id': 'consent'})
+
+    def clean_message(self):
+        message = self.cleaned_data.get('message', '')
+        if len(message) > 5000:
+            raise ValidationError("Сообщение не должно превышать 5000 символов.")
+        return message
 
 
 

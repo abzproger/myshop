@@ -2,6 +2,14 @@
 
 Интернет‑магазин на **Django 6** с **PostgreSQL**, **Redis**, **Celery**, **Gunicorn** и **Nginx**.
 
+## Структура проекта
+- `shop/` — настройки Django, urls, wsgi
+- `catalog/` — каталог товаров, категории, варианты, скидки, форма контактов
+- `cart/` — корзина (сессии)
+- `orders/` — оформление заказов (3 шага), история заказов
+- `users/` — аутентификация, регистрация, профиль, сброс пароля
+- `templates/` — HTML-шаблоны
+
 ## Что внутри
 - **Каталог**: категории, товары, варианты товара, изображения (оптимизация при сохранении).
 - **Корзина**: сессии + UI.
@@ -74,7 +82,12 @@ poetry run python manage.py runserver
 ```
 
 ## Переменные окружения (`.env`)
-Смотри `env.example`. Основные:
+Минимально для запуска:
+- `DJANGO_SECRET_KEY` — секретный ключ (обязательно)
+- `DJANGO_ALLOWED_HOSTS` — хосты через запятую (например `127.0.0.1,localhost`)
+- `DJANGO_DEBUG` — `True` или `False`
+
+Полный список — смотри `env.example`. Основные:
 - **Django**
   - `DJANGO_SECRET_KEY`
   - `DJANGO_DEBUG` (`True`/`False`)
@@ -84,6 +97,7 @@ poetry run python manage.py runserver
   - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`
 - **Redis / Celery**
   - `REDIS_URL`
+  - `DJANGO_USE_REDIS_CACHE` — `False` для fallback на LocMemCache (если Redis недоступен)
   - `CELERY_BROKER_URL`
   - `CELERY_RESULT_BACKEND`
   - `CELERY_TASK_DEFAULT_QUEUE`

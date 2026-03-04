@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
 from django.contrib import messages
@@ -67,7 +69,7 @@ def contacts(request):
         form = ContactForm(request.POST)
         if form.is_valid():
             contact: ContactMessage = form.save(commit=False)
-            contact.source_url = request.META.get('HTTP_REFERER', '')
+            contact.source_url = (request.META.get('HTTP_REFERER', '') or '')[:500]
             contact.save()
 
             # Пытаемся отправить письмо на почту магазина.
@@ -89,11 +91,10 @@ def contacts(request):
                     email_body,
                     to_email,
                     [to_email],
-                    fail_silently=True,
+                    fail_silently=False,
                 )
-            except Exception:
-                # Не падаем, даже если почта не настроена.
-                pass
+            except Exception as e:
+                logging.getLogger(__name__).exception("Ошибка отправки письма с формы контактов: %s", e)
 
             messages.success(request, "Ваше сообщение успешно отправлено. Мы свяжемся с вами в ближайшее время.")
             return redirect('catalog:contacts')

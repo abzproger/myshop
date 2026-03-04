@@ -9,10 +9,19 @@
             <nav aria-label="breadcrumb" class="mb-3">
                 <ol class="breadcrumb mb-0">
                     <li class="breadcrumb-item"><a href="{% url 'catalog:index' %}" class="text-decoration-none">Главная</a></li>
+                    {% if is_guest %}
+                    <li class="breadcrumb-item">Отслеживание заказа</li>
+                    {% else %}
                     <li class="breadcrumb-item"><a href="{% url 'orders:history' %}" class="text-decoration-none">Мои заказы</a></li>
+                    {% endif %}
                     <li class="breadcrumb-item active" aria-current="page">Заказ #{{ order.id }}</li>
                 </ol>
             </nav>
+            {% if is_guest %}
+            <div class="alert alert-info py-2 mb-3 small">
+                <i class="bi bi-info-circle"></i> Сохраните ссылку на эту страницу — по ней вы можете отслеживать статус заказа без входа в аккаунт.
+            </div>
+            {% endif %}
 
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
                 <div>

@@ -1,18 +1,31 @@
+import secrets
+
 from django.db import models
 from django.conf import settings
 from catalog.models import Product, ProductVariant
 from decimal import Decimal
 
+
+def generate_guest_token():
+    """Токен для доступа гостя к заказу по ссылке."""
+    return secrets.token_urlsafe(32)
+
+
 class Order(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='orders', on_delete=models.SET_NULL, blank=True, null=True, verbose_name='Пользователь'
+    )
+    guest_access_token = models.CharField(
+        max_length=64, unique=True, null=True, blank=True,
+        verbose_name='Токен доступа (гостевой заказ)',
+        help_text='Ссылка с этим токеном позволяет гостю просматривать заказ без входа.',
     )
     first_name = models.CharField(max_length=100, verbose_name='Имя')
     last_name = models.CharField(max_length=100, verbose_name='Фамилия', blank=True)
     phone = models.CharField(max_length=30, verbose_name='Телефон')
     email = models.EmailField(verbose_name='Email')
     address = models.CharField(max_length=255, verbose_name='Адрес доставки')
-    created = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
+    created = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Создан')
     updated = models.DateTimeField(auto_now=True, verbose_name='Обновлён')
     paid = models.BooleanField(default=False, verbose_name='Оплачен')
     comment = models.TextField(verbose_name='Комментарий', blank=True, null=True)
