@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Заказ #{{ order.id }} - MEBELHUB{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/orders-detail.css' %}">
+{% endblock %}
 
 {% block content %}
 <section class="container py-5">
@@ -64,7 +69,7 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0 align-middle">
+                        <table class="table table-hover mb-0 align-middle order-items-table">
                             <thead class="table-light">
                                 <tr>
                                     <th class="ps-3">Товар</th>
@@ -76,7 +81,7 @@
                             <tbody>
                                 {% for item in order.items.all %}
                                 <tr>
-                                    <td class="ps-3">
+                                    <td class="ps-3" data-label="Товар">
                                         <div class="fw-semibold">
                                             <a href="{% url 'catalog:product_detail' product_slug=item.product.slug %}" class="text-decoration-none link-body-emphasis">
                                                 {{ item.product.name }}
@@ -86,9 +91,9 @@
                                         <div class="text-muted small">Вариант: {{ item.variant }}</div>
                                         {% endif %}
                                     </td>
-                                    <td class="text-end">{{ item.price|floatformat:0 }} ₽</td>
-                                    <td class="text-end">{{ item.quantity }}</td>
-                                    <td class="text-end pe-3 fw-semibold">{{ item.get_cost|floatformat:0 }} ₽</td>
+                                    <td class="text-end" data-label="Цена">{{ item.price|floatformat:0 }} ₽</td>
+                                    <td class="text-end" data-label="Кол-во">{{ item.quantity }}</td>
+                                    <td class="text-end pe-3 fw-semibold" data-label="Сумма">{{ item.get_cost|floatformat:0 }} ₽</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

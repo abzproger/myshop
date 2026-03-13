@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Оформление заказа — шаг 3 - MEBELHUB{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/orders-checkout-steps.css' %}">
+{% endblock %}
 
 {% block content %}
 <section class="container py-5">
@@ -76,7 +81,7 @@
                             </label>
                         </div>
 
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between checkout-actions">
                             <a href="{% url 'orders:checkout_address' %}" class="btn btn-outline-secondary">
                                 Назад
                             </a>

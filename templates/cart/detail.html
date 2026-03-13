@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Корзина - MEBELHUB{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cart-detail.css' %}">
+{% endblock %}
 
 {% block content %}
 <section class="container py-5">
@@ -35,7 +40,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table align-middle">
+                            <table class="table align-middle cart-table">
                                 <thead>
                                     <tr>
                                         <th>Товар</th>
@@ -48,7 +53,7 @@
                                 <tbody id="cart-table-body">
                                     {% for item in cart %}
                                     <tr data-variant-id="{{ item.variant.id }}">
-                                    <td>
+                                    <td data-label="Товар">
                                         <div class="d-flex align-items-center">
                                             {% if item.variant.images.first %}
                                             <img src="{{ item.variant.images.first.image.url }}"
@@ -71,7 +76,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center" data-label="Кол-во">
                                         <div class="input-group input-group-sm justify-content-center" style="max-width: 140px; margin: 0 auto;">
                                             <button type="button"
                                                     class="btn btn-outline-secondary btn-qty-minus"
@@ -92,13 +97,13 @@
                                             </button>
                                         </div>
                                     </td>
-                                    <td class="text-end">
+                                    <td class="text-end" data-label="Цена">
                                         {{ item.price|floatformat:0 }} ₽
                                     </td>
-                                    <td class="text-end cart-line-total" data-variant-id="{{ item.variant.id }}">
+                                    <td class="text-end cart-line-total" data-label="Сумма" data-variant-id="{{ item.variant.id }}">
                                         <strong>{{ item.total_price|floatformat:0 }} ₽</strong>
                                     </td>
-                                    <td class="text-end">
+                                    <td class="text-end" data-label="Удалить">
                                         <form method="post" action="{% url 'cart:remove' item.variant.id %}" class="cart-remove-form">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -114,7 +119,7 @@
                 </div>
             </div>
         </div>
-            <div class="col-lg-4">
+            <div class="col-lg-4 cart-summary">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="mb-3">Итого</h5>

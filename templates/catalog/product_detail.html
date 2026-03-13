@@ -4,84 +4,7 @@
 {% block title %}{{ product.name }} - Интернет-магазин мебели{% endblock %}
 
 {% block extra_css %}
-<style>
-    .product-hero {
-        background: linear-gradient(135deg, #040404 0%, #000000 100%);
-        color: white;
-        padding: 40px 0;
-        margin-bottom: 30px;
-    }
-    .product-gallery {
-        position: sticky;
-        top: 20px;
-    }
-    .main-image {
-        width: 100%;
-        height: 500px;
-        object-fit: cover;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        cursor: pointer;
-    }
-    .thumbnail {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border-radius: 5px;
-        cursor: pointer;
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
-    .thumbnail:hover {
-        border-color: #000000;
-        transform: scale(1.05);
-    }
-    .thumbnail.active {
-        border-color: #000000;
-    }
-    .price-section {
-        padding: 25px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-    .variant-card {
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    .variant-card:hover {
-        border-color: #000000;
-        box-shadow: 0 5px 15px rgba(58, 43, 32, 0.35);
-    }
-    .variant-card.selected {
-        border-color: #000000;
-        background: #f0f4ff;
-    }
-    .attribute-table {
-        width: 100%;
-    }
-    .attribute-table td {
-        padding: 10px;
-        border-bottom: 1px solid #e9ecef;
-    }
-    .attribute-table td:first-child {
-        font-weight: 600;
-        width: 40%;
-    }
-    .related-product-card {
-        transition: transform 0.3s ease;
-    }
-    .related-product-card:hover {
-        transform: translateY(-5px);
-    }
-    .breadcrumb-custom {
-        background: transparent;
-        padding: 0;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/product-detail.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -192,7 +115,8 @@
                          data-variant-price="{{ variant.get_price_with_discount|floatformat:0 }}"
                          data-variant-base-price="{{ variant.get_base_price|floatformat:0 }}"
                          data-variant-discount="{{ variant.get_discount_amount|floatformat:0 }}"
-                         onclick="window.location.href='{% url "catalog:product_detail" product.slug %}?variant={{ variant.id }}'">
+                         data-url="{% url 'catalog:product_detail' product.slug %}?variant={{ variant.id }}"
+                         onclick="window.location.href=this.dataset.url">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>{{ variant.name|default:variant.product.name }}</strong>
@@ -236,7 +160,7 @@
                             data-variant-id="{{ selected_variant.id }}"
                             data-in-cart="{% if selected_variant in cart %}1{% else %}0{% endif %}">
                         {% if selected_variant in cart %}
-                            <i class="bi bi-cart-check"></i> В корзине (перейти)
+                            <i class="bi bi-cart-check"></i> Уже в корзине
                         {% else %}
                             <i class="bi bi-cart-plus"></i> Добавить в корзину
                         {% endif %}

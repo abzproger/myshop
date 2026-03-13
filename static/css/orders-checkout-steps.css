@@ -1,0 +1,14 @@
+/* Checkout steps: make action buttons mobile-friendly */
+
+@media (max-width: 575.98px) {
+    .checkout-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem;
+    }
+
+    .checkout-actions .btn {
+        width: 100%;
+    }
+}
+

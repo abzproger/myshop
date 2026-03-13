@@ -1,0 +1,136 @@
+/* Catalog page: hero, filters, product cards */
+
+.catalog-hero {
+    position: relative;
+    color: white;
+    padding: 80px 0;
+    margin-bottom: 30px;
+    background-image:
+        linear-gradient(
+            rgba(0,0,0,0.45),
+            rgba(0,0,0,0.45)
+        ),
+        url("/static/img/hero-living-room.jpg");
+    background-size: cover;
+    background-position: center;
+}
+
+/* Product cards */
+.product-card {
+    transition: transform .25s ease, box-shadow .25s ease;
+    height: 100%;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,.12);
+}
+
+.product-image {
+    height: 250px;
+    object-fit: cover;
+}
+
+/* Discount badge */
+.discount-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* Filter sidebar */
+.filter-sidebar {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    position: sticky;
+    top: 20px;
+}
+
+.category-link {
+    display: block;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #333;
+    transition: .2s;
+}
+
+.category-link.category-child {
+    padding-left: 30px;
+    font-size: .95rem;
+}
+
+.category-link:hover {
+    background: #e9ecef;
+}
+
+.category-link.active {
+    background: linear-gradient(135deg,#3a2b20 0%,#1a120b 100%);
+    color: white;
+}
+
+/* Search box */
+.search-box {
+    position: relative;
+}
+
+.search-box .form-control {
+    padding-right: 45px;
+}
+
+.search-box .btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 576px) {
+    .catalog-hero {
+        padding: 60px 0;
+    }
+
+    .product-image {
+        height: 140px;
+    }
+
+    .product-card .card-title {
+        font-size: .9rem;
+        line-height: 1.2;
+        height: 2.4em;
+        overflow: hidden;
+    }
+
+    .product-card .btn {
+        font-size: .8rem;
+        padding: 6px 8px;
+    }
+
+    .product-card .fw-bold {
+        font-weight: 500 !important;
+    }
+
+    .filter-sidebar {
+        padding: 15px;
+        position: static; /* avoid awkward sticky on very small screens */
+    }
+
+    /* Benefits icons a bit smaller on phones */
+    .bg-light i {
+        font-size: 1.6rem !important;
+    }
+
+    .bg-light strong {
+        font-size: .9rem;
+    }
+
+    .bg-light .small {
+        font-size: .75rem;
+    }
+}
+

@@ -1,0 +1,49 @@
+/* Order detail: responsive items table */
+
+@media (max-width: 575.98px) {
+    .order-items-table thead {
+        display: none;
+    }
+
+    .order-items-table,
+    .order-items-table tbody,
+    .order-items-table tr,
+    .order-items-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .order-items-table tr {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        padding: 10px 12px;
+    }
+
+    .order-items-table td {
+        border: 0;
+        padding: 4px 0;
+    }
+
+    .order-items-table td::before {
+        content: attr(data-label);
+        display: inline-block;
+        min-width: 80px;
+        margin-right: 8px;
+        font-size: 0.8rem;
+        color: var(--bs-secondary-color);
+    }
+
+    .order-items-table td[data-label="Товар"]::before {
+        display: none;
+    }
+
+    .order-items-table td[data-label="Товар"] {
+        padding-top: 0;
+    }
+
+    .order-items-table tfoot {
+        display: block;
+        padding: 10px 12px;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+}
+

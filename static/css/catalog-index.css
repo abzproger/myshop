@@ -1,0 +1,80 @@
+/* Home page (index): hero and product/category cards */
+
+.hero-section {
+    position: relative;
+    color: white;
+    padding: 120px 0;
+    margin-bottom: 50px;
+    background-image: linear-gradient(
+            rgba(0,0,0,0.45),
+            rgba(0,0,0,0.45)
+    ),
+    url("/static/img/hero-living-room.jpg");
+    background-size: cover;
+    background-position: center;
+}
+
+/* Product cards */
+.product-card {
+    transition: transform .25s ease, box-shadow .25s ease;
+    height: 100%;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,.12);
+}
+
+.product-image {
+    height: 250px;
+    object-fit: cover;
+}
+
+/* Category cards */
+.category-card {
+    transition: transform .25s ease;
+    cursor: pointer;
+}
+
+.category-card:hover {
+    transform: scale(1.03);
+}
+
+/* Discount badge */
+.discount-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 70px 0;
+    }
+
+    .product-image {
+        height: 140px;
+    }
+
+    .category-card img {
+        height: 130px !important;
+    }
+
+    .product-card .card-title {
+        font-size: .9rem;
+        line-height: 1.2;
+        height: 2.4em;
+        overflow: hidden;
+    }
+
+    .product-card .btn {
+        font-size: .8rem;
+        padding: 6px 8px;
+    }
+
+    .product-card .fw-bold {
+        font-weight: 500 !important;
+    }
+}
+
