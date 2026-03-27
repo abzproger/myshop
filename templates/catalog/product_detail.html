@@ -199,14 +199,15 @@
             <h3 class="mb-4">Характеристики</h3>
             <div class="card">
                 <div class="card-body">
-                    <table class="attribute-table">
+                    <ul class="attribute-list">
                         {% for attr_value in attributes %}
-                        <tr>
-                            <td>{{ attr_value.attribute.name }}</td>
-                            <td>{{ attr_value.value }}</td>
-                        </tr>
+                        <li class="attribute-item">
+                            <span class="attribute-name">{{ attr_value.attribute.name|capfirst }}</span>
+                            <span class="attribute-separator"> - </span>
+                            <span class="attribute-value">{{ attr_value.value }}</span>
+                        </li>
                         {% endfor %}
-                    </table>
+                    </ul>
                 </div>
             </div>
         </div>

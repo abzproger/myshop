@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Главная - MEBELHUB{% endblock %}
+{% block title %}Главная - SOFAART{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/catalog-index.css' %}">
@@ -13,7 +13,7 @@
 
 <section class="hero-section">
     <div class="container text-center">
-        <h1 class="display-5 fw-bold mb-3">Добро пожаловать в MEBELHUB</h1>
+        <h1 class="display-5 fw-bold mb-3">Добро пожаловать в SOFAART</h1>
         <p class="lead mb-4">Качественная мебель для дома и офиса</p>
 
         <a href="{% url 'catalog:catalog' %}" class="btn btn-light btn-lg">
@@ -121,7 +121,7 @@
 {% if variant.get_discount_amount > 0 %}
 
 <span class="badge bg-danger discount-badge">
--{{ variant.get_discount_amount|floatformat:0 }} руб.
+-{{ variant.get_discount_amount|floatformat:0 }} ₽  
 </span>
 
 {% endif %}
@@ -167,17 +167,17 @@
 {% if variant.get_price_with_discount < variant.get_base_price %}
 
 <span class="text-decoration-line-through text-muted small">
-{{ variant.get_base_price }} руб.
+{{ variant.get_base_price }} ₽  
 </span>
 
 <span class="fw-bold text-danger ms-2">
-{{ variant.get_price_with_discount|floatformat:0 }} руб.
+{{ variant.get_price_with_discount|floatformat:0 }} ₽  
 </span>
 
 {% else %}
 
 <span class="fw-bold">
-{{ variant.get_base_price|floatformat:0 }} руб.
+{{ variant.get_base_price|floatformat:0 }} ₽  
 </span>
 
 {% endif %}

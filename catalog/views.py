@@ -74,7 +74,7 @@ def contacts(request):
 
             # Пытаемся отправить письмо на почту магазина.
             subject_display = contact.get_subject_display() or "Обращение с формы контактов"
-            email_subject = f"[Контакты MEBELHUB] {subject_display}"
+            email_subject = f"[Контакты SOFAART] {subject_display}"
             email_body = (
                 f"Имя: {contact.name}\n"
                 f"Email: {contact.email}\n"
@@ -84,7 +84,7 @@ def contacts(request):
                 f"Источник: {contact.source_url}"
             )
 
-            to_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or "info@mebelhub.ru"
+            to_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or "info@sofaart.ru"
             try:
                 send_mail(
                     email_subject,
