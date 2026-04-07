@@ -12,7 +12,3 @@ def cart(request):
         "cart_total_price": cart.get_total_price(),
     }
 
-
-
-
-

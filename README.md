@@ -1,111 +1,83 @@
-# MyShop (Django)
+# MyShop
 
-Интернет‑магазин на **Django 6** с **PostgreSQL**, **Redis**, **Celery**, **Gunicorn** и **Nginx**.
+Интернет-магазин на **Django 6** с каталогом, корзиной на сессиях, многошаговым оформлением заказа и личным кабинетом. В инфраструктуре: **PostgreSQL**, **Redis**, **Celery**, **Gunicorn**, **Nginx**; статика отдаётся через **WhiteNoise** и Nginx.
 
-## Структура проекта
-- `shop/` — настройки Django, urls, wsgi
-- `catalog/` — каталог товаров, категории, варианты, скидки, форма контактов
-- `cart/` — корзина (сессии)
-- `orders/` — оформление заказов (3 шага), история заказов
-- `users/` — аутентификация, регистрация, профиль, сброс пароля
-- `templates/` — HTML-шаблоны
+## Возможности
 
-## Что внутри
-- **Каталог**: категории, товары, варианты товара, изображения (оптимизация при сохранении).
-- **Корзина**: сессии + UI.
-- **Заказы**: оформление (3 шага) + история заказов + детальная страница заказа.
-- **Админка**: заказы и позиции заказа с inline‑позициями.
-- **Статика**:
-  - Bootstrap хранится **локально** в `static/vendor/bootstrap/`
-  - WhiteNoise включён, чтобы `/static/` работал даже если заходить на `:8000` напрямую
+| Область | Описание |
+|--------|----------|
+| Каталог | Категории (в т.ч. вложенные), товары, варианты, изображения, скидки, REST API |
+| Корзина | Сессии, ограничение количества, AJAX-обновления |
+| Заказы | Три шага оформления, история для авторизованных, гостевой просмотр по токену |
+| Пользователи | Регистрация, вход, профиль, сброс пароля |
+| Фоновые задачи | Celery (пример — задачи в `catalog/tasks.py`) |
+
+## Структура репозитория
+
+- `shop/` — настройки, корневой `urls.py`, WSGI/ASGI, Celery
+- `catalog/` — витрина, форма контактов, API, management-команды
+- `cart/` — логика корзины и представления
+- `orders/` — заказы и чекаут
+- `users/` — учётные записи
+- `templates/`, `static/` — шаблоны и фронт (Bootstrap лежит в `static/vendor/bootstrap/`)
 
 ## Требования
-- **Python 3.12+**
-- **Poetry**
-- **Docker + Docker Compose** (рекомендуемый способ запуска)
 
-## Быстрый старт (Docker — рекомендовано)
-1) Создайте `.env` из примера:
+- Python **3.12+**
+- **Poetry** (зависимости в `pyproject.toml`)
+- **Docker** и **Docker Compose** — рекомендуемый способ запуска всего стека
 
-```bash
-# Linux/macOS
-cp env.example .env
-```
+## Запуск в Docker
 
-```powershell
-# Windows PowerShell
-copy env.example .env
-```
+1. Скопируйте переменные окружения из примера:
 
-2) Отредактируйте `.env` и **обязательно** задайте:
-- `DJANGO_SECRET_KEY`
-- `DJANGO_ALLOWED_HOSTS` (например `127.0.0.1,localhost`)
+   ```bash
+   cp env.example .env
+   ```
 
-3) Поднимите проект:
+   В PowerShell:
 
-```bash
-docker compose up -d --build
-```
+   ```powershell
+   copy env.example .env
+   ```
 
-4) Откройте:
-- **Сайт (через Nginx)**: `http://localhost/`
-- **Админка**: `http://localhost/admin/`
+2. В `.env` обязательно задайте как минимум:
 
-> Можно открыть и `http://localhost:8000/` (напрямую Gunicorn) — статика тоже будет работать благодаря WhiteNoise, но в проде обычно ходят через Nginx.
+   - `DJANGO_SECRET_KEY`
+   - `DJANGO_ALLOWED_HOSTS` (например `127.0.0.1,localhost`)
 
-## Локальный запуск (Poetry + Docker для инфраструктуры)
-Подходит, если хочешь дебажить `runserver`, но БД/Redis держать в Docker.
+3. Поднимите сервисы:
 
-1) Установить зависимости:
+   ```bash
+   docker compose up -d --build
+   ```
+
+4. Сайт через reverse proxy: **http://localhost/**  
+   Админка: **http://localhost/admin/**  
+
+   Прямой доступ к приложению на порту **8000** тоже возможен; статика подхватывается WhiteNoise. В продакшене обычно используют только Nginx.
+
+## Локальная разработка (Poetry + БД/Redis в Docker)
+
+Удобно для отладки с `runserver`, когда PostgreSQL и Redis крутятся в контейнерах.
 
 ```bash
 poetry install
-```
-
-2) Поднять Postgres+Redis:
-
-```bash
 docker compose up -d postgres redis
-```
-
-3) Прогнать миграции и статику:
-
-```bash
 poetry run python manage.py migrate
 poetry run python manage.py collectstatic --noinput
-```
-
-4) Запустить Django:
-
-```bash
 poetry run python manage.py runserver
 ```
 
-## Переменные окружения (`.env`)
-Минимально для запуска:
-- `DJANGO_SECRET_KEY` — секретный ключ (обязательно)
-- `DJANGO_ALLOWED_HOSTS` — хосты через запятую (например `127.0.0.1,localhost`)
-- `DJANGO_DEBUG` — `True` или `False`
+## Переменные окружения
 
-Полный список — смотри `env.example`. Основные:
-- **Django**
-  - `DJANGO_SECRET_KEY`
-  - `DJANGO_DEBUG` (`True`/`False`)
-  - `DJANGO_ALLOWED_HOSTS` (через запятую)
-  - `DJANGO_CSRF_TRUSTED_ORIGINS` (для https/домена в проде)
-- **PostgreSQL**
-  - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`
-- **Redis / Celery**
-  - `REDIS_URL`
-  - `DJANGO_USE_REDIS_CACHE` — `False` для fallback на LocMemCache (если Redis недоступен)
-  - `CELERY_BROKER_URL`
-  - `CELERY_RESULT_BACKEND`
-  - `CELERY_TASK_DEFAULT_QUEUE`
-- **Email**
-  - `EMAIL_BACKEND`
-  - `DEFAULT_FROM_EMAIL`
+Минимум для старта: `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, при необходимости `DJANGO_DEBUG`.
 
-## Создать суперпользователя
+Полный перечень с пояснениями — в **`env.example`**: база, Redis, кэш (`DJANGO_USE_REDIS_CACHE`), Celery, почта, CSRF и HTTPS для продакшена.
+
+## Администрирование
+
+Создать суперпользователя:
 
 ```bash
 docker compose exec web python manage.py createsuperuser
@@ -117,15 +89,11 @@ docker compose exec web python manage.py createsuperuser
 poetry run python manage.py createsuperuser
 ```
 
-## Заказы в админке
-В админке доступны:
-- **Orders → Orders** (заказы)
-- **Orders → Order items** (позиции заказа)
+В админке: заказы и позиции заказа (inline у заказа).
 
-В карточке заказа позиции отображаются inline.
+## Тестовые данные
 
-## Тестовые данные (сидинг каталога)
-Есть management command для наполнения каталога:
+Наполнение каталога:
 
 ```bash
 docker compose exec web python manage.py seed_products
@@ -139,29 +107,29 @@ docker compose exec web python manage.py shell
 
 ```python
 from catalog.tasks import ping
-ping.delay().get(timeout=10)
+ping.delay().get(timeout=10)  # ожидается "pong"
 ```
 
-Ожидаемый результат: `pong`.
+## Статика и медиа
 
-## Статика и Nginx
-- `STATIC_ROOT = staticfiles/` (результат `collectstatic`)
-- Nginx раздаёт:
-  - `/static/` из `./staticfiles`
-  - `/media/` из `./media`
+- `STATIC_ROOT` → `staticfiles/` (после `collectstatic`)
+- Nginx раздаёт `/static/` из `./staticfiles` и `/media/` из `./media`
+- Конфигурация Nginx: `nginx/conf.d/default.conf`
 
-Конфиг: `nginx/conf.d/default.conf`
+## Если что-то не так
 
-## Troubleshooting
-### В админке/на сайте нет стилей
-- Открывай сайт через `http://localhost/` (Nginx).
-- Если заходишь на `http://localhost:8000/`, статика отдаётся WhiteNoise (встроено), но **после изменений** нужно пересобрать контейнер:
+**Нет стилей в админке или на сайте**
+
+- Зайдите через **http://localhost/** (Nginx).
+- После изменений образа/статики может понадобиться пересборка: `docker compose up -d --build`.
+
+**404 на `/static/admin/...`**
+
+- Проверьте логи: `docker compose logs --tail 200 nginx` и логи сервиса `web`.
+- Убедитесь, что `collectstatic` выполнялся успешно.
+
+## Тесты
 
 ```bash
-docker compose up -d --build
+poetry run python manage.py test
 ```
-
-### `/static/admin/...` отдаёт 404
-Проверь:
-- `docker compose logs --tail 200 nginx`
-- что `collectstatic` отработал (в логах `web` будет `post-processed`)

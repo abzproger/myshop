@@ -74,7 +74,3 @@ class ProductSerializer(serializers.ModelSerializer):
             "variants",
         ]
 
-
-
-
-

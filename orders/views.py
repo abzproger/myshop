@@ -2,6 +2,7 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -62,8 +63,7 @@ def order_detail(request, order_id: int):
     if order.user_id is None:
         raise Http404
 
-    # Проверка прав: только владелец
-    if not user.is_authenticated or order.user_id != user.id:
+    if order.user_id != user.id:
         raise Http404
     # Привязка "старого" заказа по email к аккаунту
     if user.email and (order.email or "").lower() == user.email.lower():
@@ -174,11 +174,7 @@ def checkout_address(request):
 
 
 def checkout_confirm(request):
-    """Шаг 3: подтверждение заказа.
-
-    Здесь пока только отображаем данные и «подтверждаем» без сохранения в БД.
-    В будущем сюда можно добавить создание моделей заказа и оплату.
-    """
+    """Шаг 3: просмотр данных и подтверждение заказа (создание записи в БД)."""
     cart = Cart(request)
     if cart.is_empty():
         messages.error(request, "Ваша корзина пуста. Добавьте товары перед оформлением заказа.")
@@ -193,7 +189,6 @@ def checkout_confirm(request):
         return redirect("orders:checkout_address")
 
     if request.method == "POST":
-        from django.db import transaction
         contact_data = request.session.get(CHECKOUT_CONTACT_KEY)
         address_data = request.session.get(CHECKOUT_ADDRESS_KEY)
 

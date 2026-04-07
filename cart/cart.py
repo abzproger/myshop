@@ -83,8 +83,6 @@ class Cart:
         return sum(item["quantity"] for item in self._cart.values())
 
     def get_total_price(self):
-        from decimal import Decimal
-
         total = Decimal("0.00")
         for item in self:
             total += item["total_price"]

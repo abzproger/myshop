@@ -1,16 +1,19 @@
+import logging
+import os
+import uuid
+from decimal import Decimal
+from io import BytesIO
+
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
-from django.core.files.base import ContentFile
-from decimal import Decimal
-from io import BytesIO
-import logging
-import os
 from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
 
-# Create your models here.
+
 def upload_to(instance, filename):
     """Генерирует безопасный путь для загрузки файлов"""
     model_name = instance.__class__.__name__.lower()
@@ -45,8 +48,6 @@ def upload_to(instance, filename):
         else:
             dir_name = 'temp'
     else:
-        # В крайнем случае используем временное имя
-        import uuid
         dir_name = str(uuid.uuid4())[:8]
     
     # Очищаем имя файла от недопустимых символов
@@ -97,7 +98,6 @@ class Product(models.Model):
 
     def get_active_discount(self):
         """Получает активную скидку для товара (приоритет: товар > категория)"""
-        from django.utils import timezone
         now = timezone.now()
         
         # Сначала проверяем скидку на товар
@@ -165,7 +165,6 @@ class ProductVariant(models.Model):
 
     def get_active_discount(self):
         """Получает активную скидку для варианта (приоритет: вариант > товар > категория)"""
-        from django.utils import timezone
         now = timezone.now()
         
         # Сначала проверяем скидку на вариант
@@ -417,7 +416,6 @@ class Discount(models.Model):
         return max(price - discount_amount, Decimal('0.00'))  # Цена не может быть отрицательной
 
     def clean(self):
-        from django.core.exceptions import ValidationError
         super().clean()
         # В зависимости от apply_to должно быть заполнено только одно целевое поле
         if self.apply_to == self.APPLY_TO_CATEGORY:

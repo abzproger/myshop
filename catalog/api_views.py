@@ -48,7 +48,3 @@ class ProductVariantViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["name", "sku", "product__name", "product__category__name"]
     ordering_fields = ["name", "price", "stock"]
     ordering = ["name"]
-
-
-
-

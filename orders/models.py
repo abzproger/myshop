@@ -1,9 +1,10 @@
 import secrets
-
-from django.db import models
-from django.conf import settings
-from catalog.models import Product, ProductVariant
 from decimal import Decimal
+
+from django.conf import settings
+from django.db import models
+
+from catalog.models import Product, ProductVariant
 
 
 def generate_guest_token():

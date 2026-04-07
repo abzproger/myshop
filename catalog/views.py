@@ -2,6 +2,7 @@ import logging
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
+from django.db.models.functions import Coalesce
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
@@ -42,7 +43,7 @@ def index(request):
         variants_sorted = sorted(variants, key=get_views, reverse=True)
         featured_products = variants_sorted[:featured_limit]
         cache.set(featured_cache_key, featured_products, 5 * 60)
-    
+
     context = {
         'categories': categories,
         'featured_products': featured_products,
@@ -179,14 +180,10 @@ def catalog(request, category_slug=None):
     # Сортировка
     sort_by = request.GET.get('sort', 'name')
     if sort_by == 'price_asc':
-        # Сначала по цене варианта, потом по цене товара
-        from django.db.models import F, Case, When
-        from django.db.models.functions import Coalesce
         variants = variants.annotate(
             final_price=Coalesce('price', 'product__price')
         ).order_by('final_price', 'product__name')
     elif sort_by == 'price_desc':
-        from django.db.models.functions import Coalesce
         variants = variants.annotate(
             final_price=Coalesce('price', 'product__price')
         ).order_by('-final_price', 'product__name')
