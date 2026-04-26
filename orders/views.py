@@ -7,13 +7,35 @@ from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 
+from catalog.models import ProductVariant
 from cart.cart import Cart
 from .models import Order, OrderItem, generate_guest_token
-from .forms import CheckoutContactForm, CheckoutAddressForm
+from .forms import CheckoutContactForm, CheckoutAddressForm, OrderCancelForm
 
 
 CHECKOUT_CONTACT_KEY = "checkout_contact"
 CHECKOUT_ADDRESS_KEY = "checkout_address"
+
+
+def _build_order_address(address_data):
+    delivery_method = address_data.get("delivery_method")
+    parts = []
+
+    if delivery_method == "pickup":
+        parts.append("Самовывоз")
+    elif delivery_method == "courier":
+        parts.append("Доставка курьером")
+
+    for value in (
+        address_data.get("postal_code", ""),
+        address_data.get("city", ""),
+        address_data.get("address_line", ""),
+    ):
+        value = value.strip()
+        if value:
+            parts.append(value)
+
+    return ", ".join(parts)
 
 
 @login_required
@@ -32,7 +54,7 @@ def order_history(request):
             | (Q(user__isnull=True) & Q(email__iexact=user.email))  # на всякий случай, если update выше не сработал
         )
         .prefetch_related("items", "items__product", "items__variant")
-        .only("id", "created", "status", "paid", "address", "user", "email")
+        .only("id", "created", "status", "paid", "address", "user", "email", "cancel_reason")
     )
     return render(request, "orders/history.html", {"orders": orders})
 
@@ -55,6 +77,7 @@ def order_detail(request, order_id: int):
             "phone",
             "email",
             "comment",
+            "cancel_reason",
         ),
         id=order_id,
     )
@@ -70,7 +93,15 @@ def order_detail(request, order_id: int):
         order.user = user
         order.save(update_fields=["user"])
 
-    return render(request, "orders/detail.html", {"order": order, "is_guest": False})
+    return render(
+        request,
+        "orders/detail.html",
+        {
+            "order": order,
+            "is_guest": False,
+            "cancel_form": OrderCancelForm(),
+        },
+    )
 
 
 def order_guest_detail(request, order_id: int, token: str):
@@ -90,11 +121,43 @@ def order_guest_detail(request, order_id: int, token: str):
             "email",
             "comment",
             "guest_access_token",
+            "cancel_reason",
         ),
         id=order_id,
         guest_access_token=token,
     )
     return render(request, "orders/detail.html", {"order": order, "is_guest": True})
+
+
+@login_required
+def order_cancel(request, order_id: int):
+    if request.method != "POST":
+        return redirect("orders:detail", order_id=order_id)
+
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    if not order.can_be_cancelled:
+        messages.error(request, "Отменить заказ уже нельзя: он уже отправлен или завершён.")
+        return redirect("orders:detail", order_id=order.id)
+
+    form = OrderCancelForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Выберите причину отмены заказа.")
+        return render(
+            request,
+            "orders/detail.html",
+            {
+                "order": order,
+                "is_guest": False,
+                "cancel_form": form,
+            },
+        )
+
+    order.status = "cancelled"
+    order.cancel_reason = form.cleaned_data["reason"]
+    order.save(update_fields=["status", "cancel_reason", "updated"])
+    messages.success(request, "Заказ успешно отменён.")
+    return redirect("orders:detail", order_id=order.id)
 
 
 def checkout_contact(request):
@@ -188,16 +251,46 @@ def checkout_confirm(request):
     if not address_data:
         return redirect("orders:checkout_address")
 
+    cart_items = list(cart)
+    if not cart_items:
+        messages.error(request, "Некоторые товары в корзине больше недоступны. Проверьте состав заказа.")
+        return redirect("cart:detail")
+
     if request.method == "POST":
         contact_data = request.session.get(CHECKOUT_CONTACT_KEY)
         address_data = request.session.get(CHECKOUT_ADDRESS_KEY)
+        cart_items = list(cart)
 
         # Проверка, что пользователю есть что сохранить
-        if not contact_data or not address_data or cart.is_empty():
+        if not contact_data or not address_data or not cart_items:
             messages.error(request, "Не хватает контактных данных, адреса или корзина пуста.")
             return redirect("orders:checkout_contact")
         try:
             with transaction.atomic():
+                variant_ids = [item["variant"].id for item in cart_items]
+                variants = ProductVariant.objects.select_for_update().select_related("product").filter(
+                    id__in=variant_ids,
+                    is_active=True,
+                    product__is_active=True,
+                )
+                variants_map = {variant.id: variant for variant in variants}
+                unavailable_items = []
+
+                for cart_item in cart_items:
+                    variant = variants_map.get(cart_item["variant"].id)
+                    if not variant:
+                        unavailable_items.append("Один из товаров в корзине больше недоступен.")
+                        continue
+                    if variant.stock < cart_item["quantity"]:
+                        unavailable_items.append(
+                            f'Недостаточно остатка для "{variant}". Доступно: {variant.stock} шт.'
+                        )
+
+                if unavailable_items:
+                    for message in unavailable_items:
+                        messages.error(request, message)
+                    return redirect("cart:detail")
+
                 full_name = contact_data.get("full_name", "")
                 parts = full_name.strip().split(" ", 1)
                 first_name = parts[0]
@@ -210,14 +303,15 @@ def checkout_confirm(request):
                     last_name=last_name,
                     email=contact_data.get("email", ""),
                     phone=contact_data.get("phone", ""),
-                    address=(address_data.get("city", "") + ", " + address_data.get("address_line", "")).strip(", "),
+                    address=_build_order_address(address_data),
                     comment=address_data.get("comment", ""),
                 )
-                for cart_item in cart:
+                for cart_item in cart_items:
+                    variant = variants_map[cart_item["variant"].id]
                     OrderItem.objects.create(
                         order=order,
-                        product=cart_item["variant"].product,
-                        variant=cart_item["variant"],
+                        product=variant.product,
+                        variant=variant,
                         price=cart_item["price"],
                         quantity=cart_item["quantity"],
                     )

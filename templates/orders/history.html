@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Мои заказы - MEBELHUB{% endblock %}
+{% block title %}Мои заказы - SofaArt{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
 <section class="container py-5">
@@ -71,6 +72,15 @@
                                 <a class="btn btn-sm btn-outline-dark" href="{% url 'orders:detail' order_id=order.id %}">
                                     Подробнее
                                 </a>
+                                {% if order.can_be_cancelled %}
+                                <a class="btn btn-sm btn-outline-danger ms-1" href="{% url 'orders:detail' order_id=order.id %}#cancel-order">
+                                    Отменить
+                                </a>
+                                {% elif order.status == "shipped" %}
+                                <div class="text-muted small mt-2">Заказ уже отправлен, отмена недоступна.</div>
+                                {% elif order.status == "cancelled" and order.cancel_reason %}
+                                <div class="text-muted small mt-2">Причина отмены: {{ order.get_cancel_reason_display }}</div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

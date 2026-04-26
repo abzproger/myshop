@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -11,8 +12,24 @@ from .cart import Cart, CART_MAX_QUANTITY_PER_ITEM
 def cart_add(request, variant_id):
     cart = Cart(request)
     variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, product__is_active=True)
-    quantity = int(request.POST.get("quantity", 1) or 1)
+    try:
+        quantity = int(request.POST.get("quantity", 1) or 1)
+    except (TypeError, ValueError):
+        quantity = 1
     quantity = max(1, min(quantity, CART_MAX_QUANTITY_PER_ITEM))
+
+    # Куда редиректить (проверяем на Open Redirect)
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or ""
+    if not next_url or not url_has_allowed_host_and_scheme(next_url, request.get_host()):
+        next_url = reverse("cart:detail")
+
+    if variant.stock < 1:
+        message = "Этот товар сейчас недоступен для заказа."
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "message": message}, status=400)
+
+        messages.error(request, message)
+        return redirect(next_url)
 
     # Режим: перезаписать количество (для AJAX-обновления из корзины)
     override = request.POST.get("override") == "1"
@@ -21,11 +38,6 @@ def cart_add(request, variant_id):
     was_in_cart = variant in cart
 
     cart.add(variant=variant, quantity=quantity, override_quantity=override)
-
-    # Куда редиректить (проверяем на Open Redirect)
-    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or ""
-    if not next_url or not url_has_allowed_host_and_scheme(next_url, request.get_host()):
-        next_url = reverse("cart:detail")
 
     # Если запрос AJAX — возвращаем JSON
     if request.headers.get("x-requested-with") == "XMLHttpRequest":

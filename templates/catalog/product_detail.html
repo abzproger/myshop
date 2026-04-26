@@ -1,257 +1,282 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ product.name }} - Интернет-магазин мебели{% endblock %}
+{% block title %}{{ product.name }} - купить в SofaArt{% endblock %}
+{% block og_type %}product{% endblock %}
+
+{% block structured_data %}
+{% if product_json_ld %}
+<script type="application/ld+json">
+{{ product_json_ld|safe }}
+</script>
+{% endif %}
+{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/product-detail.css' %}">
+<link rel="stylesheet" href="{% static 'css/catalog-cards.css' %}">
 {% endblock %}
 
 {% block content %}
-<!-- Breadcrumb -->
-<div class="container mt-3">
-    <nav aria-label="breadcrumb" class="breadcrumb-custom">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'catalog:index' %}">Главная</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'catalog:catalog' %}">Каталог</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'catalog:catalog_by_category' product.category.slug %}">{{ product.category.name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
-        </ol>
-    </nav>
-</div>
+<section class="product-page">
+    <div class="container py-4 py-lg-5">
+        <nav aria-label="breadcrumb" class="breadcrumb-custom mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'catalog:index' %}">Главная</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'catalog:catalog' %}">Каталог</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'catalog:catalog_by_category' product.category.slug %}">{{ product.category.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+            </ol>
+        </nav>
 
-<!-- Основная информация о товаре -->
-<section class="container mb-5">
-    <div class="row">
-        <!-- Галерея изображений выбранного варианта -->
-        <div class="col-lg-6 mb-4">
-            <div class="product-gallery">
-                {% if variant_images %}
-                <img id="mainImage" 
-                     src="{{ main_image.image.url }}" 
-                     alt="{{ product.name }}" 
-                     class="main-image"
-                     loading="eager"
-                     fetchpriority="high"
-                     decoding="async"
-                     onclick="openImageModal(this.src)">
-                
-                <div class="d-flex gap-2 flex-wrap">
-                    {% for image in variant_images %}
-                    <img src="{{ image.image.url }}" 
-                         alt="{{ product.name }}" 
-                         class="thumbnail {% if forloop.first %}active{% endif %}"
-                         loading="lazy"
-                         decoding="async"
-                         onclick="changeMainImage(this.src, this)"
-                         data-full="{{ image.image.url }}">
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="main-image bg-light d-flex align-items-center justify-content-center">
-                    <i class="bi bi-image text-muted" style="font-size: 5rem;"></i>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Информация о товаре -->
-        <div class="col-lg-6">
-            <h1 class="mb-3">{{ product.name }}</h1>
-            <!-- артикул -->
-            <div class="mb-3">
-                {% if selected_variant and selected_variant.sku %}
-                <span class="badge bg-info ms-2">Артикул: {{ selected_variant.sku }}</span>
-                {% endif %}
-                
-            </div>
-            
-            <!-- Описание -->
-            {% if product.description %}
-            <div class="mb-4">
-                <h5>Описание</h5>
-                <p class="text-muted">{{ product.description|linebreaks }}</p>
-            </div>
-            {% endif %}
-            
-            <!-- Цена -->
-            <div class="price-section">
-                {% if selected_variant %}
-                    {% with variant=selected_variant %}
-                    <div class="d-flex align-items-center mb-3">
-                        {% if variant.get_price_with_discount < variant.get_base_price %}
-                        <div>
-                            <span class="text-decoration-line-through text-muted h5 mb-0">
-                                {{ variant.get_base_price|floatformat:0 }} ₽
-                            </span>
-                            <span class="display-6 fw-bold text-danger ms-3"> 
-                                {{ variant.get_price_with_discount|floatformat:0 }} ₽
-                            </span>
+        <div class="row g-4 g-xl-5 align-items-start">
+            <div class="col-lg-6">
+                <div class="product-gallery-card">
+                    <div class="product-gallery">
+                        {% if variant_images %}
+                        <img id="mainImage"
+                             src="{{ main_image.image.url }}"
+                             alt="{{ product.name }}"
+                             class="main-image"
+                             loading="eager"
+                             fetchpriority="high"
+                             decoding="async"
+                             onclick="openImageModal(this.src)">
+
+                        <div class="product-thumbnails">
+                            {% for image in variant_images %}
+                            <button
+                                type="button"
+                                class="thumbnail-button {% if forloop.first %}active{% endif %}"
+                                onclick="changeMainImage('{{ image.image.url }}', this)"
+                                aria-label="Показать изображение {{ forloop.counter }}"
+                            >
+                                <img src="{{ image.image.url }}"
+                                     alt="{{ product.name }}"
+                                     class="thumbnail"
+                                     loading="lazy"
+                                     decoding="async">
+                            </button>
+                            {% endfor %}
                         </div>
                         {% else %}
-                        <span class="display-6 fw-bold">
-                            {{ variant.get_base_price|floatformat:0 }} ₽
-                        </span>
+                        <div class="main-image product-image-placeholder">
+                            <i class="bi bi-image text-muted"></i>
+                        </div>
                         {% endif %}
                     </div>
-                    {% if variant.get_discount_amount > 0 %}
-                        <i class="bi bi-tag-fill"></i> 
-                        Ваша скидка: <strong>{{ variant.get_discount_amount|floatformat:0 }} ₽</strong>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="product-summary-card">
+                    <h1 class="product-title mb-3">{{ product.name }}</h1>
+
+                    {% if selected_variant and selected_variant.sku %}
+                    <div class="product-meta mb-3">
+                        <span class="product-meta-chip">Артикул: {{ selected_variant.sku }}</span>
+                        {% if selected_variant.size %}
+                        <span class="product-meta-chip">Размер: {{ selected_variant.size }}</span>
+                        {% endif %}
+                        {% if selected_variant.color %}
+                        <span class="product-meta-chip">Цвет: {{ selected_variant.color }}</span>
+                        {% endif %}
+                    </div>
                     {% endif %}
-                    {% endwith %}
-                {% else %}
-                <span class="display-6 fw-bold">Цена по запросу</span>
-                {% endif %}
-            </div>
-            
-            <!-- Варианты товара -->
-            {% if variants.count > 1 %}
-            <div class="mb-4">
-                <h5 class="mb-3">Доступные варианты</h5>
-                <div id="variantsList">
-                    {% for variant in variants %}
-                    <div class="variant-card {% if selected_variant and selected_variant.id == variant.id %}selected{% endif %}" 
-                         data-variant-id="{{ variant.id }}"
-                         data-variant-price="{{ variant.get_price_with_discount|floatformat:0 }}"
-                         data-variant-base-price="{{ variant.get_base_price|floatformat:0 }}"
-                         data-variant-discount="{{ variant.get_discount_amount|floatformat:0 }}"
-                         data-url="{% url 'catalog:product_detail' product.slug %}?variant={{ variant.id }}"
-                         onclick="window.location.href=this.dataset.url">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ variant.name|default:variant.product.name }}</strong>
-                                {% if variant.size %}<span class="badge bg-secondary ms-2">{{ variant.size }}</span>{% endif %}
-                                {% if variant.color %}<span class="badge bg-secondary ms-2">{{ variant.color }}</span>{% endif %}
-                                {% if variant.sku %}<small class="text-muted d-block mt-1">SKU: {{ variant.sku }}</small>{% endif %}
+
+                    <div class="price-section">
+                        {% if selected_variant %}
+                        {% with variant=selected_variant %}
+                        <div class="product-price-block">
+                            {% if variant.get_price_with_discount < variant.get_base_price %}
+                            <div class="product-price-block__prices">
+                                <span class="product-price-block__old-price">{{ variant.get_base_price|floatformat:0 }} ₽</span>
+                                <span class="product-price-block__current-price product-price-block__current-price--discount">
+                                    {{ variant.get_price_with_discount|floatformat:0 }} ₽
+                                </span>
                             </div>
-                            <div class="text-end">
-                                {% if variant.get_price_with_discount < variant.get_base_price %}
-                                <div>
-                                    <span class="text-decoration-line-through text-muted small">{{ variant.get_base_price|floatformat:0 }} ₽</span>
-                                    <span class="fw-bold text-danger ms-2">{{ variant.get_price_with_discount|floatformat:0 }} ₽</span>
+                            <div class="product-price-block__note">
+                                Вы экономите {{ variant.get_discount_amount|floatformat:0 }} ₽
+                            </div>
+                            {% else %}
+                            <div class="product-price-block__prices">
+                                <span class="product-price-block__current-price">
+                                    {{ variant.get_base_price|floatformat:0 }} ₽
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            {% if variant.stock > 0 %}
+                            <div class="product-stock text-success">В наличии: {{ variant.stock }} шт.</div>
+                            {% else %}
+                            <div class="product-stock text-danger">Нет в наличии</div>
+                            {% endif %}
+                        </div>
+                        {% endwith %}
+                        {% else %}
+                        <div class="product-price-block">
+                            <span class="product-price-block__current-price">Цена по запросу</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if selected_variant %}
+                    <div class="product-actions mt-3">
+                        <form method="post"
+                              action="{% url 'cart:add' selected_variant.id %}"
+                              class="js-add-to-cart-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit"
+                                    class="btn shop-btn shop-btn--primary w-100 js-add-to-cart-button"
+                                    data-variant-id="{{ selected_variant.id }}"
+                                    data-in-cart="{% if selected_variant in cart %}1{% else %}0{% endif %}"
+                                    data-added-label="Уже в корзине"
+                                    {% if selected_variant.stock < 1 %}disabled{% endif %}>
+                                {% if selected_variant.stock < 1 %}
+                                    <i class="bi bi-slash-circle"></i> Нет в наличии
+                                {% elif selected_variant in cart %}
+                                    <i class="bi bi-cart-check"></i> Уже в корзине
+                                {% else %}
+                                    <i class="bi bi-cart-plus"></i> Добавить в корзину
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    {% if variants.count > 1 %}
+                    <div class="product-variants-section mt-3">
+                        <div class="section-heading-sm mb-2">Варианты</div>
+                        <div id="variantsList" class="variants-grid">
+                            {% for variant in variants %}
+                            <div class="variant-card {% if selected_variant and selected_variant.id == variant.id %}selected{% endif %}"
+                                 data-variant-id="{{ variant.id }}"
+                                 data-url="{% url 'catalog:product_detail' product.slug %}?variant={{ variant.id }}"
+                                 onclick="window.location.href=this.dataset.url">
+                                <div class="variant-card__image-wrap">
+                                    {% with variant_image=variant.images.all.0 %}
+                                        {% if variant_image %}
+                                        <img src="{{ variant_image.image.url }}"
+                                             alt="{{ variant.name|default:variant.product.name }}"
+                                             class="variant-card__image"
+                                             loading="lazy"
+                                             decoding="async">
+                                        {% else %}
+                                        <div class="variant-card__image variant-card__image--placeholder">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </div>
-                                {% else %}
-                                <span class="fw-bold">{{ variant.get_base_price|floatformat:0 }} ₽</span>
-                                {% endif %}
-                                {% if variant.stock > 0 %}
-                                <small class="text-success d-block">В наличии ({{ variant.stock }} шт.)</small>
-                                {% else %}
-                                <small class="text-danger d-block">Нет в наличии</small>
+                                <div class="variant-card__content">
+                                    <div class="variant-card__top">
+                                        <div class="variant-card__name">{{ variant.name|default:variant.product.name }}</div>
+                                        {% if variant.stock > 0 %}
+                                        <span class="variant-card__stock text-success">В наличии</span>
+                                        {% else %}
+                                        <span class="variant-card__stock text-danger">Нет в наличии</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="variant-card__meta">
+                                        {% if variant.size %}<span>{{ variant.size }}</span>{% endif %}
+                                        {% if variant.color %}<span>{{ variant.color }}</span>{% endif %}
+                                        {% if variant.sku %}<span>{{ variant.sku }}</span>{% endif %}
+                                    </div>
+                                    {% if variant.get_price_with_discount < variant.get_base_price %}
+                                    <div class="variant-card__price">
+                                        <span class="variant-card__old-price">{{ variant.get_base_price|floatformat:0 }} ₽</span>
+                                        <span class="variant-card__current-price">{{ variant.get_price_with_discount|floatformat:0 }} ₽</span>
+                                    </div>
+                                    {% else %}
+                                    <div class="variant-card__price">
+                                        <span class="variant-card__current-price">{{ variant.get_base_price|floatformat:0 }} ₽</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% if selected_variant and selected_variant.id == variant.id %}
+                                <div class="variant-card__selected-mark" aria-label="Выбранный вариант">
+                                    <i class="bi bi-check2"></i>
+                                </div>
                                 {% endif %}
                             </div>
+                            {% endfor %}
                         </div>
                     </div>
-                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if product.description or attributes %}
+        <div class="row g-4 mt-1 mt-lg-3">
+            {% if product.description %}
+            <div class="{% if attributes %}col-lg-6{% else %}col-12{% endif %}">
+                <div class="content-card h-100">
+                    <div class="section-heading">Описание</div>
+                    <div class="content-card__body text-muted">
+                        {{ product.description|linebreaks }}
+                    </div>
                 </div>
             </div>
             {% endif %}
-            
-            <!-- Кнопки действий -->
-            <div class="d-grid gap-2 mb-4">
-                {% if selected_variant %}
-                <form method="post"
-                      action="{% url 'cart:add' selected_variant.id %}"
-                      class="js-add-to-cart-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="quantity" value="1">
-                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button type="submit"
-                            class="btn btn-primary btn-lg w-100 js-add-to-cart-button"
-                            data-variant-id="{{ selected_variant.id }}"
-                            data-in-cart="{% if selected_variant in cart %}1{% else %}0{% endif %}">
-                        {% if selected_variant in cart %}
-                            <i class="bi bi-cart-check"></i> Уже в корзине
-                        {% else %}
-                            <i class="bi bi-cart-plus"></i> Добавить в корзину
-                        {% endif %}
-                    </button>
-                </form>
-                {% endif %}
-                <button class="btn btn-outline-secondary">
-                    <i class="bi bi-heart"></i> В избранное
-                </button>
-            </div>
-            
-            <!-- Дополнительная информация -->
-            <div class="row g-3 text-center">
-                <div class="col-4">
-                    <i class="bi bi-truck text-primary" style="font-size: 1.5rem;"></i>
-                    <p class="small mb-0 mt-2">Быстрая доставка</p>
-                </div>
-                <div class="col-4">
-                    <i class="bi bi-shield-check text-success" style="font-size: 1.5rem;"></i>
-                    <p class="small mb-0 mt-2">Гарантия качества</p>
-                </div>
-                <div class="col-4">
-                    <i class="bi bi-arrow-repeat text-info" style="font-size: 1.5rem;"></i>
-                    <p class="small mb-0 mt-2">Возврат 14 дней</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 
-<!-- Характеристики -->
-{% if attributes %}
-<section class="container mb-5">
-    <div class="row">
-        <div class="col-lg-8">
-            <h3 class="mb-4">Характеристики</h3>
-            <div class="card">
-                <div class="card-body">
-                    <ul class="attribute-list">
-                        {% for attr_value in attributes %}
-                        <li class="attribute-item">
-                            <span class="attribute-name">{{ attr_value.attribute.name|capfirst }}</span>
-                            <span class="attribute-separator"> - </span>
-                            <span class="attribute-value">{{ attr_value.value }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
+            {% if attributes %}
+            <div class="{% if product.description %}col-lg-6{% else %}col-12{% endif %}">
+                <div class="content-card h-100">
+                    <div class="section-heading">Характеристики</div>
+                    <div class="content-card__body">
+                        <ul class="attribute-list">
+                            {% for attr_value in attributes %}
+                            <li class="attribute-item">
+                                <span class="attribute-name">{{ attr_value.attribute.name|capfirst }}</span>
+                                <span class="attribute-separator">-</span>
+                                <span class="attribute-value">{{ attr_value.value }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
             </div>
+            {% endif %}
         </div>
-    </div>
-</section>
-{% endif %}
+        {% endif %}
 
-<!-- Похожие товары -->
-{% if related_products %}
-<section class="container mb-5">
-    <h3 class="mb-4">Похожие товары</h3>
-    <div class="row g-4">
-        {% for variant in related_products %}
-        <div class="col-md-6 col-lg-3">
-            <div class="card related-product-card h-100">
-                {% if variant.images.first %}
-                <img src="{{ variant.images.first.image.url }}" 
-                     class="card-img-top" 
-                     alt="{{ variant.product.name }}"
-                     style="height: 200px; object-fit: cover;">
-                {% else %}
-                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                    <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
-                </div>
-                {% endif %}
-                <div class="card-body">
-                    <h6 class="card-title">
-                        <a href="{% url 'catalog:product_detail' variant.product.slug %}" class="text-decoration-none">
-                            {{ variant.product.name }}
-                        </a>
-                    </h6>
-                    <p class="card-text">
-                        <span class="fw-bold">{{ variant.get_price_with_discount|floatformat:0 }} ₽</span>
-                    </p>
-                    <a href="{% url 'catalog:product_detail' variant.product.slug %}" class="btn btn-sm btn-outline-primary w-100">
-                        Подробнее
-                    </a>
+        {% if related_products %}
+        <section class="related-section mt-5">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <div class="section-heading-sm mb-2">Подборка</div>
+                    <h2 class="h3 mb-0">Похожие товары</h2>
                 </div>
             </div>
+            <div class="row g-3 g-lg-4">
+                {% for variant in related_products %}
+                <div class="col-6 col-md-6 col-xl-3">
+                    {% include "catalog/includes/product_card.html" with variant=variant %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <div class="product-benefits mt-4 mt-lg-5">
+            <div class="product-benefit">
+                <i class="bi bi-truck"></i>
+                <span>Быстрая доставка</span>
+            </div>
+            <div class="product-benefit">
+                <i class="bi bi-shield-check"></i>
+                <span>Гарантия качества</span>
+            </div>
+            <div class="product-benefit">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>Возврат 14 дней</span>
+            </div>
         </div>
-        {% endfor %}
     </div>
 </section>
-{% endif %}
 
 <!-- Модальное окно для изображения -->
 <div class="modal fade" id="imageModal" tabindex="-1">
@@ -271,7 +296,7 @@
 <script>
 function changeMainImage(src, element) {
     document.getElementById('mainImage').src = src;
-    document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('active'));
+    document.querySelectorAll('.thumbnail-button').forEach(thumb => thumb.classList.remove('active'));
     element.classList.add('active');
 }
 
@@ -281,4 +306,3 @@ function openImageModal(src) {
 }
 </script>
 {% endblock %}
-

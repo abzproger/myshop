@@ -28,9 +28,74 @@ class Cart:
             cart = self.session[cart_id] = {}
         self._cart = cart
 
+    def _get_variants_map(self):
+        variant_ids = list(self._cart.keys())
+        if not variant_ids:
+            return {}
+
+        variants = ProductVariant.objects.filter(
+            id__in=variant_ids,
+            is_active=True,
+            product__is_active=True,
+        ).select_related("product")
+        return {str(variant.id): variant for variant in variants}
+
+    def _get_quantity_limit(self, variant: ProductVariant):
+        max_qty = getattr(settings, "CART_MAX_QUANTITY_PER_ITEM", CART_MAX_QUANTITY_PER_ITEM)
+        return min(max_qty, variant.stock)
+
+    def _get_items(self):
+        variants_map = self._get_variants_map()
+        items = []
+        cart_changed = False
+
+        for variant_id in list(self._cart.keys()):
+            variant = variants_map.get(variant_id)
+            if not variant:
+                del self._cart[variant_id]
+                cart_changed = True
+                continue
+
+            max_qty = self._get_quantity_limit(variant)
+            if max_qty < 1:
+                del self._cart[variant_id]
+                cart_changed = True
+                continue
+
+            item = self._cart[variant_id]
+            try:
+                raw_quantity = int(item["quantity"])
+                price = Decimal(item["price"])
+            except (KeyError, TypeError, ValueError, ArithmeticError):
+                del self._cart[variant_id]
+                cart_changed = True
+                continue
+
+            quantity = max(1, min(raw_quantity, max_qty))
+            if quantity != item["quantity"]:
+                item["quantity"] = quantity
+                cart_changed = True
+
+            items.append(
+                {
+                    "variant": variant,
+                    "price": price,
+                    "quantity": quantity,
+                    "total_price": price * quantity,
+                }
+            )
+
+        if cart_changed:
+            self.save()
+
+        return items
+
     def add(self, variant: ProductVariant, quantity=1, override_quantity=False):
         variant_id = str(variant.id)
-        max_qty = getattr(settings, "CART_MAX_QUANTITY_PER_ITEM", CART_MAX_QUANTITY_PER_ITEM)
+        max_qty = self._get_quantity_limit(variant)
+        if max_qty < 1:
+            self.remove(variant)
+            return
         quantity = max(1, min(int(quantity), max_qty))
 
         if variant_id not in self._cart:
@@ -61,35 +126,19 @@ class Cart:
         self.session.modified = True
 
     def __iter__(self):
-        variant_ids = self._cart.keys()
-        variants = ProductVariant.objects.filter(id__in=variant_ids).select_related("product")
-        variants_map = {str(v.id): v for v in variants}
-
-        for variant_id, item in self._cart.items():
-            variant = variants_map.get(variant_id)
-            if not variant:
-                continue
-            price = Decimal(item["price"])
-            quantity = item["quantity"]
-            total_price = price * quantity
-            yield {
-                "variant": variant,
-                "price": price,
-                "quantity": quantity,
-                "total_price": total_price,
-            }
+        yield from self._get_items()
 
     def __len__(self):
-        return sum(item["quantity"] for item in self._cart.values())
+        return sum(item["quantity"] for item in self._get_items())
 
     def get_total_price(self):
         total = Decimal("0.00")
-        for item in self:
+        for item in self._get_items():
             total += item["total_price"]
         return total
 
     def is_empty(self):
-        return len(self._cart) == 0
+        return not self._get_items()
 
     def __contains__(self, item):
         """Позволяет писать: `if variant in cart` в шаблонах."""

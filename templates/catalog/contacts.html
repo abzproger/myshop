@@ -1,7 +1,74 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Контакты - SOFAART{% endblock %}
+{% block title %}Контакты SofaArt — доставка мебели по России{% endblock %}
+{% block meta_description %}Контакты SofaArt: телефон, email, адрес магазина, режим работы и форма обратной связи для вопросов о мебели, заказах и доставке.{% endblock %}
+{% block og_title %}Контакты SofaArt{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "FurnitureStore",
+            "@id": "{{ site_url }}/contacts/#store",
+            "name": "SofaArt",
+            "url": "{{ site_url }}/contacts/",
+            "email": "info@sofaart.ru",
+            "telephone": "+7-999-123-45-67",
+            "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "RU",
+                "addressRegion": "Республика Дагестан",
+                "addressLocality": "Верхнее Казанище",
+                "streetAddress": "Центральная часть поселка"
+            },
+            "areaServed": "RU",
+            "openingHours": "Mo-Su 09:00-21:00"
+        },
+        {
+            "@type": "FAQPage",
+            "@id": "{{ site_url }}/contacts/#faq",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "Как оформить заказ?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Выберите товар, добавьте его в корзину и оформите заказ. Менеджер свяжется с вами для подтверждения."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Какие способы доставки доступны?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "SofaArt доставляет мебель по всей России. Стоимость и сроки доставки рассчитываются индивидуально."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Можно ли вернуть товар?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Товар можно вернуть в течение 14 дней при сохранении товарного вида и упаковки согласно законодательству РФ."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Есть ли гарантия на товары?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "На товары предоставляется гарантия производителя и гарантийное обслуживание."
+                    }
+                }
+            ]
+        }
+    ]
+}
+</script>
+{% endblock %}
 
 {% block extra_css %}
 <style>

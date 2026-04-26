@@ -1,4 +1,69 @@
-/* Cart: mobile-friendly cart table and sticky summary */
+/* Cart: cleaner desktop and phone-first mobile layout */
+
+.cart-card,
+.cart-summary-card {
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 22px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+}
+
+.cart-page-heading {
+    max-width: 48rem;
+}
+
+.cart-item-image {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 14px;
+    background: #f8fafc;
+    flex-shrink: 0;
+}
+
+.cart-item-title {
+    color: #111827;
+}
+
+.cart-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.75rem;
+    margin-top: 0.2rem;
+}
+
+.cart-qty-group {
+    max-width: 140px;
+    margin: 0 auto;
+}
+
+.cart-qty-input {
+    max-width: 70px;
+}
+
+.cart-remove-button {
+    min-width: 40px;
+}
+
+.cart-summary-actions {
+    display: grid;
+    gap: 0.65rem;
+}
+
+@media (max-width: 991.98px) {
+    .cart-summary {
+        position: sticky;
+        bottom: 0;
+        z-index: 1030;
+        padding: 12px 0 env(safe-area-inset-bottom, 0);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .cart-summary-card {
+        margin: 0;
+    }
+}
 
 @media (max-width: 575.98px) {
     .cart-table thead {
@@ -13,106 +78,129 @@
         width: 100%;
     }
 
+    .cart-table {
+        margin-bottom: 0;
+    }
+
     .cart-table tr {
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 12px;
-        background: var(--bs-body-bg);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 18px;
+        padding: 14px;
+        margin-bottom: 14px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+    }
+
+    .cart-table tr:last-child {
+        margin-bottom: 0;
     }
 
     .cart-table td {
         border: 0;
-        padding: 8px 0;
+        padding: 0;
+    }
+
+    .cart-table td + td {
+        margin-top: 12px;
     }
 
     .cart-table td::before {
         content: attr(data-label);
         display: block;
-        font-size: 0.85rem;
-        color: var(--bs-secondary-color);
-        margin-bottom: 4px;
-    }
-
-    /* Make rows look like "label — value" */
-    .cart-table td:not([data-label="Товар"]):not([data-label="Кол-во"]) {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-    }
-
-    .cart-table td:not([data-label="Товар"]):not([data-label="Кол-во"])::before {
-        margin-bottom: 0;
-        white-space: nowrap;
-    }
-
-    .cart-table td:not([data-label="Товар"]):not([data-label="Кол-во"]) > * {
-        flex: 0 0 auto;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        margin-bottom: 6px;
     }
 
     .cart-table td[data-label="Товар"]::before {
         display: none;
     }
 
-    .cart-table td[data-label="Товар"] {
-        padding-top: 0;
+    .cart-item-media {
+        align-items: flex-start !important;
+        gap: 0.85rem;
     }
 
-    /* Quantity control: keep compact and centered */
-    .cart-table td[data-label="Кол-во"] {
+    .cart-item-image {
+        width: 84px;
+        height: 84px;
+        margin-right: 0 !important;
+    }
+
+    .cart-item-title {
         display: block;
+        font-size: 0.95rem;
+        line-height: 1.35;
+        margin-bottom: 0.15rem;
     }
 
-    .cart-table .input-group {
-        max-width: 220px !important;
+    .cart-item-meta {
+        gap: 0.2rem 0.55rem;
+        font-size: 0.74rem;
+    }
+
+    .cart-table td[data-label="Кол-во"] .cart-qty-group {
         margin: 0;
+        max-width: 168px;
     }
 
     .cart-table .cart-qty-input {
-        max-width: 80px !important;
+        max-width: 72px !important;
+        min-height: 40px;
     }
 
     .cart-table .btn-qty-minus,
     .cart-table .btn-qty-plus {
         min-width: 44px;
+        min-height: 40px;
     }
 
-    .cart-table td.text-end,
-    .cart-table td.text-center {
+    .cart-table td[data-label="Цена"],
+    .cart-table td[data-label="Сумма"] {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
         text-align: left !important;
     }
 
-    /* Delete button: do not stretch */
-    .cart-table td[data-label="Удалить"] form {
-        margin-left: auto;
+    .cart-table td[data-label="Цена"]::before,
+    .cart-table td[data-label="Сумма"]::before {
+        margin-bottom: 0;
     }
 
-    .cart-table td[data-label="Удалить"] .btn.btn-outline-danger {
-        width: auto;
-        min-width: 44px;
-    }
-}
-
-/* Mobile / tablet: keep "Итого" visible at bottom, but above footer */
-@media (max-width: 991.98px) {
-    .cart-summary {
-        position: sticky;
-        bottom: 0;
-        z-index: 1030;
-        padding: 10px 0;
-        background: rgba(248, 249, 250, 0.96);
-        backdrop-filter: blur(8px);
-        border-top: 1px solid rgba(0, 0, 0, 0.08);
+    .cart-remove-cell {
+        display: flex !important;
+        justify-content: flex-end;
     }
 
-    .cart-summary > .card {
-        margin: 0;
-        max-width: 720px;
+    .cart-remove-cell::before {
+        display: none !important;
+    }
+
+    .cart-remove-button {
+        min-width: 42px;
+        min-height: 42px;
     }
 
     .cart-summary .card-body {
-        padding: 12px;
+        padding: 14px;
+    }
+
+    .cart-summary h5 {
+        font-size: 1rem;
+        margin-bottom: 0.9rem !important;
+    }
+
+    .cart-summary-actions {
+        gap: 0.55rem;
+    }
+
+    .cart-summary-actions .btn {
+        min-height: 44px;
     }
 }
 

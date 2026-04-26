@@ -1,0 +1,102 @@
+<article
+    class="shop-product-card js-product-card card border-0 h-100 overflow-hidden position-relative"
+    data-url="{% url 'catalog:product_detail' variant.product.slug %}?variant={{ variant.id }}"
+    tabindex="0"
+    role="link"
+    aria-label="Открыть товар {{ variant.product.name }}"
+>
+    {% if variant.get_discount_amount > 0 %}
+    <span class="shop-product-card__badge badge rounded-pill text-bg-danger">
+        -{{ variant.get_discount_amount|floatformat:0 }} ₽
+    </span>
+    {% endif %}
+
+    <div class="shop-product-card__image-link">
+        {% if variant.images.first %}
+        <img
+            src="{{ variant.images.first.image.url }}"
+            class="shop-product-card__image"
+            alt="{{ variant.product.name }}"
+            loading="lazy"
+            decoding="async"
+        >
+        {% else %}
+        <div class="shop-product-card__image shop-product-card__image--placeholder">
+            <i class="bi bi-image text-muted"></i>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card-body d-flex flex-column">
+        <div class="shop-product-card__body">
+            <h3 class="shop-product-card__title h6 mb-2">
+                <span class="shop-product-card__title-text">{{ variant.product.name }}</span>
+            </h3>
+
+            {% if variant.size or variant.color or variant.name %}
+            <div class="shop-product-card__meta mb-2">
+                {% if variant.size %}
+                <span class="shop-meta-chip">{{ variant.size }}</span>
+                {% endif %}
+                {% if variant.color %}
+                <span class="shop-meta-chip">{{ variant.color }}</span>
+                {% endif %}
+                {% if not variant.size and not variant.color and variant.name and variant.name != variant.product.name %}
+                <span class="shop-meta-chip">{{ variant.name }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="shop-product-card__price mb-2">
+                {% if variant.get_price_with_discount < variant.get_base_price %}
+                <span class="shop-product-card__old-price">{{ variant.get_base_price|floatformat:0 }} ₽</span>
+                <span class="shop-product-card__current-price shop-product-card__current-price--discount">
+                    {{ variant.get_price_with_discount|floatformat:0 }} ₽
+                </span>
+                {% else %}
+                <span class="shop-product-card__current-price">
+                    {{ variant.get_base_price|floatformat:0 }} ₽
+                </span>
+                {% endif %}
+            </div>
+
+            {% if variant.stock > 0 %}
+            <div class="shop-product-card__stock text-success">В наличии</div>
+            {% else %}
+            <div class="shop-product-card__stock text-danger">Нет в наличии</div>
+            {% endif %}
+        </div>
+
+        <div class="mt-auto pt-2 shop-product-card__actions">
+            {% if variant.stock > 0 %}
+            <form
+                method="post"
+                action="{% url 'cart:add' variant.id %}"
+                class="js-add-to-cart-form shop-product-card__cart-form"
+            >
+                {% csrf_token %}
+                <input type="hidden" name="quantity" value="1">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button
+                    type="submit"
+                    class="btn shop-btn {% if variant in cart %}shop-btn--in-cart{% else %}shop-btn--secondary{% endif %} js-add-to-cart-button"
+                    data-variant-id="{{ variant.id }}"
+                    data-in-cart="{% if variant in cart %}1{% else %}0{% endif %}"
+                    data-compact="1"
+                    data-added-label="Товар в корзине"
+                    aria-label="{% if variant in cart %}Товар уже в корзине{% else %}Добавить {{ variant.product.name }} в корзину{% endif %}"
+                    title="{% if variant in cart %}Товар уже в корзине{% else %}Добавить в корзину{% endif %}"
+                >
+                    {% if variant in cart %}
+                    <i class="bi bi-cart-check"></i>
+                    <span class="shop-product-card__action-text">В корзине</span>
+                    {% else %}
+                    <i class="bi bi-cart-plus"></i>
+                    <span class="shop-product-card__action-text">В корзину</span>
+                    {% endif %}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</article>

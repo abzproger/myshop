@@ -13,6 +13,22 @@ def generate_guest_token():
 
 
 class Order(models.Model):
+    CANCEL_REASON_CHANGED_MIND = "changed_mind"
+    CANCEL_REASON_FOUND_BETTER = "found_better"
+    CANCEL_REASON_DELIVERY_TIME = "delivery_time"
+    CANCEL_REASON_ORDER_MISTAKE = "order_mistake"
+    CANCEL_REASON_PAYMENT_ISSUE = "payment_issue"
+    CANCEL_REASON_OTHER = "other"
+    CANCEL_REASON_CHOICES = [
+        (CANCEL_REASON_CHANGED_MIND, "Передумал(а) покупать"),
+        (CANCEL_REASON_FOUND_BETTER, "Нашел(а) более подходящий вариант"),
+        (CANCEL_REASON_DELIVERY_TIME, "Не устраивают сроки доставки"),
+        (CANCEL_REASON_ORDER_MISTAKE, "Ошибся(лась) при оформлении"),
+        (CANCEL_REASON_PAYMENT_ISSUE, "Возникли сложности с оплатой"),
+        (CANCEL_REASON_OTHER, "Другая причина"),
+    ]
+    CANCELLABLE_STATUSES = {"pending", "processing"}
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='orders', on_delete=models.SET_NULL, blank=True, null=True, verbose_name='Пользователь'
     )
@@ -30,6 +46,12 @@ class Order(models.Model):
     updated = models.DateTimeField(auto_now=True, verbose_name='Обновлён')
     paid = models.BooleanField(default=False, verbose_name='Оплачен')
     comment = models.TextField(verbose_name='Комментарий', blank=True, null=True)
+    cancel_reason = models.CharField(
+        max_length=32,
+        choices=CANCEL_REASON_CHOICES,
+        blank=True,
+        verbose_name="Причина отмены",
+    )
     status = models.CharField(
         max_length=20, 
         choices=[
@@ -57,6 +79,10 @@ class Order(models.Model):
         for item in self.items.all():
             total += item.get_cost()
         return total
+
+    @property
+    def can_be_cancelled(self):
+        return self.status in self.CANCELLABLE_STATUSES
 
 
 class OrderItem(models.Model):

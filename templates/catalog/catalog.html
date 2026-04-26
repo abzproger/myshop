@@ -3,11 +3,12 @@
 
 {% block title %}
 {% if selected_category %}{{ selected_category.name }} - {% endif %}
-Каталог товаров - Интернет-магазин мебели
+Каталог мебели - SofaArt
 {% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/catalog-catalog.css' %}">
+<link rel="stylesheet" href="{% static 'css/catalog-cards.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -144,118 +145,8 @@ class="category-link category-child {% if selected_category == child %}active{% 
 <div class="row g-3">
 
 {% for variant in variants %}
-
 <div class="col-6 col-md-6 col-xl-4">
-
-<div class="card product-card h-100 position-relative">
-
-{% if variant.get_discount_amount > 0 %}
-<span class="badge bg-danger discount-badge">
--{{ variant.get_discount_amount|floatformat:0 }} ₽ 
-</span>
-{% endif %}
-
-{% if variant.images.first %}
-
-<img
-src="{{ variant.images.first.image.url }}"
-class="card-img-top product-image"
-alt="{{ variant }}"
-loading="lazy"
->
-
-{% else %}
-
-<div class="card-img-top bg-light d-flex align-items-center justify-content-center product-image">
-<i class="bi bi-image text-muted" style="font-size:3rem"></i>
-</div>
-
-{% endif %}
-
-<div class="card-body d-flex flex-column">
-
-<h6 class="card-title">
-{{ variant.product.name }}
-</h6>
-
-<p class="text-muted small mb-2">
-
-{% if variant.size %}
-<span class="badge bg-secondary">{{ variant.size }}</span>
-{% endif %}
-
-{% if variant.color %}
-<span class="badge bg-secondary">{{ variant.color }}</span>
-{% endif %}
-
-</p>
-
-<div class="mt-auto">
-
-<div class="mb-2">
-
-{% if variant.get_price_with_discount < variant.get_base_price %}
-
-<span class="text-decoration-line-through text-muted small">
-{{ variant.get_base_price|floatformat:0 }} ₽ 
-</span>
-
-<span class="fw-bold text-danger ms-2">
-{{ variant.get_price_with_discount|floatformat:0 }} ₽ 
-</span>
-
-{% else %}
-
-<span class="fw-bold">
-{{ variant.get_base_price|floatformat:0 }} ₽ 
-</span>
-
-{% endif %}
-
-</div>
-
-<div class="d-grid gap-2">
-
-    <form method="post"
-    action="{% url 'cart:add' variant.id %}"
-    class="js-add-to-cart-form">
-
-{% csrf_token %}
-
-<input type="hidden" name="quantity" value="1">
-<input type="hidden" name="next" value="{{ request.get_full_path }}">
-
-<button type="submit"
-      class="btn btn-primary w-100 js-add-to-cart-button"
-      data-variant-id="{{ variant.id }}"
-      data-in-cart="{% if variant in cart %}1{% else %}0{% endif %}">
-
-{% if variant in cart %}
-<i class="bi bi-cart-check"></i> Уже в корзине
-{% else %}
-<i class="bi bi-cart-plus"></i> Добавить в корзину
-{% endif %}
-
-</button>
-</form>
-
-<a
-href="{% url 'catalog:product_detail' variant.product.slug %}?variant={{ variant.id }}"
-class="btn btn-outline-secondary btn-sm">
-
-<i class="bi bi-eye"></i>
-Подробнее
-
-</a>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+    {% include "catalog/includes/product_card.html" with variant=variant %}
 </div>
 
 {% endfor %}
@@ -268,48 +159,6 @@ class="btn btn-outline-secondary btn-sm">
 
 </section>
 
-
-<!-- ПРЕИМУЩЕСТВА -->
-<section class="bg-light py-5">
-
-<div class="container">
-
-<div class="row g-4 text-center justify-content-center">
-
-<div class="col-4 col-md-3">
-<i class="bi bi-truck text-primary" style="font-size:3rem"></i>
-
-<h5 class="mt-3">Быстрая доставка</h5>
-
-<p class="text-muted">Доставка по всей России</p>
-
-</div>
-
-<div class="col-4 col-md-3">
-
-<i class="bi bi-shield-check text-success" style="font-size:3rem"></i>
-
-<h5 class="mt-3">Гарантия качества</h5>
-
-<p class="text-muted">Официальная гарантия</p>
-
-</div>
-<div class="col-4 col-md-3">
-
-
-<i class="bi bi-headset text-warning" style="font-size:3rem"></i>
-
-<h5 class="mt-3">Поддержка 24/7</h5>
-
-<p class="text-muted">Всегда на связи</p>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
 
 
 {% endblock %}

@@ -3,16 +3,19 @@ services:
     image: postgres:16
     container_name: myshop-postgres
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: myshop
-      POSTGRES_USER: myshop
-      POSTGRES_PASSWORD: myshop
+      POSTGRES_DB: ${POSTGRES_DB:-myshop}
+      POSTGRES_USER: ${POSTGRES_USER:-myshop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-myshop}
     ports:
-      - "5432:5432"
+      # Локальный доступ с VPS/хоста без публикации наружу.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - myshop_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myshop -d myshop"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-myshop} -d ${POSTGRES_DB:-myshop}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -23,7 +26,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - myshop_redisdata:/data
     healthcheck:
@@ -43,7 +46,8 @@ services:
       - ./staticfiles:/static:ro
       - ./media:/media:ro
     depends_on:
-      - web
+      web:
+        condition: service_healthy
 
   web:
     build:
@@ -56,15 +60,17 @@ services:
     env_file:
       - .env
     environment:
+      DJANGO_SETTINGS_MODULE: shop.settings.prod
       POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/2
       CELERY_RESULT_BACKEND: redis://redis:6379/3
-    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn shop.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60"
+    command: ["/bin/sh", "/app/entrypoint.sh"]
     ports:
-      - "8000:8000"
+      # Приложение доступно напрямую только с хоста; снаружи трафик идет через Nginx.
+      - "127.0.0.1:8000:8000"
     volumes:
-      - .:/app
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
     depends_on:
@@ -72,6 +78,18 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz/', timeout=3)"
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   celery-worker:
     build:
@@ -86,12 +104,11 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: shop.settings.prod
       POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/2
       CELERY_RESULT_BACKEND: redis://redis:6379/3
     command: celery -A shop worker -l info
-    volumes:
-      - .:/app
     depends_on:
       postgres:
         condition: service_healthy
@@ -111,12 +128,11 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: shop.settings.prod
       POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/2
       CELERY_RESULT_BACKEND: redis://redis:6379/3
     command: celery -A shop beat -l info
-    volumes:
-      - .:/app
     depends_on:
       postgres:
         condition: service_healthy

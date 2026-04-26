@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.order_history, name="index"),
     path("history/", views.order_history, name="history"),
     path("history/<int:order_id>/", views.order_detail, name="detail"),
+    path("history/<int:order_id>/cancel/", views.order_cancel, name="cancel"),
     path("guest/<int:order_id>/<str:token>/", views.order_guest_detail, name="guest_detail"),
     path("checkout/contact/", views.checkout_contact, name="checkout_contact"),
     path("checkout/address/", views.checkout_address, name="checkout_address"),

@@ -1,4 +1,4 @@
-/* Catalog page: hero, filters, product cards */
+/* Catalog page: hero, filters, layout */
 
 .catalog-hero {
     position: relative;
@@ -15,34 +15,13 @@
     background-position: center;
 }
 
-/* Product cards */
-.product-card {
-    transition: transform .25s ease, box-shadow .25s ease;
-    height: 100%;
-}
-
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(0,0,0,.12);
-}
-
-.product-image {
-    height: 250px;
-    object-fit: cover;
-}
-
-/* Discount badge */
-.discount-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
-
 /* Filter sidebar */
 .filter-sidebar {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
+    background: #fff;
+    padding: 22px;
+    border-radius: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
     position: sticky;
     top: 20px;
 }
@@ -93,26 +72,6 @@
 @media (max-width: 576px) {
     .catalog-hero {
         padding: 60px 0;
-    }
-
-    .product-image {
-        height: 140px;
-    }
-
-    .product-card .card-title {
-        font-size: .9rem;
-        line-height: 1.2;
-        height: 2.4em;
-        overflow: hidden;
-    }
-
-    .product-card .btn {
-        font-size: .8rem;
-        padding: 6px 8px;
-    }
-
-    .product-card .fw-bold {
-        font-weight: 500 !important;
     }
 
     .filter-sidebar {

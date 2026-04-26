@@ -19,18 +19,75 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
     "rest_framework",
     "catalog",
     "cart",
     "orders",
     "users",
 ]
+
+JAZZMIN_SETTINGS = {
+    "site_title": "SofaArt Admin",
+    "site_header": "SofaArt Admin",
+    "site_brand": "SofaArt",
+    "welcome_sign": "Панель управления магазином",
+    "copyright": "SofaArt",
+    "search_model": ["auth.User", "catalog.Product", "catalog.ProductVariant", "orders.Order"],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "show_ui_builder": False,
+    "related_modal_active": True,
+    "custom_css": "css/admin-custom.css",
+    "order_with_respect_to": ["catalog", "orders", "users", "auth"],
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "catalog": "fas fa-store",
+        "catalog.category": "fas fa-folder-tree",
+        "catalog.product": "fas fa-couch",
+        "catalog.productvariant": "fas fa-box-open",
+        "catalog.productimage": "fas fa-image",
+        "catalog.attribute": "fas fa-sliders-h",
+        "catalog.attributevalue": "fas fa-list",
+        "catalog.discount": "fas fa-percent",
+        "catalog.contactmessage": "fas fa-envelope",
+        "orders": "fas fa-shopping-bag",
+        "orders.order": "fas fa-receipt",
+        "orders.orderitem": "fas fa-list-ol",
+    },
+    "topmenu_links": [
+        {"name": "Сайт", "url": "catalog:index", "new_window": True},
+        {"model": "orders.Order"},
+        {"model": "catalog.Product"},
+    ],
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "flatly",
+    "default_theme_mode": "light",
+    "navbar": "navbar-white navbar-light",
+    "accent": "accent-primary",
+    "navbar_small_text": False,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "sidebar_nav_indent_style": True,
+    "sidebar_nav_size": "nav-default",
+    "brand_colour": "navbar-dark",
+    "actions_sticky_top": True,
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -56,6 +113,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "cart.context_processors.cart",
+                "shop.context_processors.seo",
             ],
         },
     },
@@ -115,6 +173,14 @@ STORAGES = {
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+SITE_NAME = env("SITE_NAME", default="SofaArt")
+SITE_URL = env("SITE_URL", default="https://sofaart.ru").rstrip("/")
+SITE_DESCRIPTION = env(
+    "SITE_DESCRIPTION",
+    default="SofaArt — интернет-магазин качественной мебели для дома и офиса с доставкой по России.",
+)
+SITE_DEFAULT_IMAGE = env("SITE_DEFAULT_IMAGE", default=f"{STATIC_URL}img/hero-living-room.jpg")
+
 LOGIN_URL = "users:login"
 LOGIN_REDIRECT_URL = "catalog:index"
 LOGOUT_REDIRECT_URL = "catalog:index"
@@ -173,7 +239,7 @@ EMAIL_BACKEND = env(
     "EMAIL_BACKEND",
     default="django.core.mail.backends.console.EmailBackend",
 )
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@mebelhub.local")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="SofaArt <info@sofaart.ru>")
 
 if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
     EMAIL_HOST = env("EMAIL_HOST")

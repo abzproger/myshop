@@ -1,3 +1,4 @@
+import json
 import logging
 
 from django.shortcuts import render, get_object_or_404, redirect
@@ -9,8 +10,26 @@ from django.conf import settings
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
 from django.core.paginator import Paginator
+from django.urls import reverse
+from django.utils.html import strip_tags
+from django.utils.text import Truncator
 from .models import Category, ProductVariant, Product, AttributeValue, ContactMessage
 from .forms import ContactForm
+
+
+def _absolute_url(path):
+    if not path:
+        return ""
+    if str(path).startswith(("http://", "https://")):
+        return str(path)
+    return f"{settings.SITE_URL.rstrip('/')}{path}"
+
+
+def _meta_description(text, fallback):
+    clean_text = strip_tags(text or "").replace("\n", " ").strip()
+    if not clean_text:
+        clean_text = fallback
+    return Truncator(clean_text).chars(155)
 
 
 def index(request):
@@ -47,6 +66,9 @@ def index(request):
     context = {
         'categories': categories,
         'featured_products': featured_products,
+        'meta_description': settings.SITE_DESCRIPTION,
+        'og_title': "SofaArt — интернет-магазин мебели",
+        'canonical_url': _absolute_url(reverse('catalog:index')),
     }
 
     return render(request, 'catalog/index.html', context)
@@ -75,7 +97,7 @@ def contacts(request):
 
             # Пытаемся отправить письмо на почту магазина.
             subject_display = contact.get_subject_display() or "Обращение с формы контактов"
-            email_subject = f"[Контакты SOFAART] {subject_display}"
+            email_subject = f"[Контакты SofaArt] {subject_display}"
             email_body = (
                 f"Имя: {contact.name}\n"
                 f"Email: {contact.email}\n"
@@ -216,6 +238,20 @@ def catalog(request, category_slug=None):
         qs.pop("category", None)
     querystring = qs.urlencode()
     
+    meta_description = (
+        "Каталог мебели SofaArt: стулья, мягкая мебель и товары для дома "
+        "с доставкой по России."
+    )
+    if selected_category:
+        meta_description = _meta_description(
+            selected_category.description,
+            f"{selected_category.name} в интернет-магазине SofaArt с доставкой по России.",
+        )
+
+    query_keys = set(request.GET.keys())
+    meta_robots = "noindex, follow" if query_keys else "index, follow"
+    canonical_url = _absolute_url(request.path)
+
     context = {
         'categories': categories,
         'variants': page_obj.object_list,
@@ -226,6 +262,14 @@ def catalog(request, category_slug=None):
         'search_query': search_query,
         'sort_by': sort_by,
         'total_count': total_count,
+        'meta_description': meta_description,
+        'meta_robots': meta_robots,
+        'canonical_url': canonical_url,
+        'og_title': (
+            f"{selected_category.name} - SofaArt"
+            if selected_category
+            else "Каталог мебели - SofaArt"
+        ),
     }
     
     return render(request, 'catalog/catalog.html', context)
@@ -283,6 +327,83 @@ def product_detail(request, product_slug):
         is_active=True
     ).exclude(product=product).select_related('product').prefetch_related('images')[:4]
 
+    canonical_url = _absolute_url(reverse('catalog:product_detail', kwargs={'product_slug': product.slug}))
+    meta_description = _meta_description(
+        product.description,
+        f"Купить {product.name} в интернет-магазине SofaArt с доставкой по России.",
+    )
+    og_image = _absolute_url(main_image.image.url) if main_image else ""
+
+    product_json_ld = None
+    if selected_variant:
+        offer_price = selected_variant.get_price_with_discount()
+        product_schema = {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Product",
+                    "@id": f"{canonical_url}#product",
+                    "name": product.name,
+                    "description": meta_description,
+                    "sku": selected_variant.sku,
+                    "category": product.category.name,
+                    "image": [og_image] if og_image else [],
+                    "brand": {
+                        "@type": "Brand",
+                        "name": "SofaArt",
+                    },
+                    "offers": {
+                        "@type": "Offer",
+                        "url": canonical_url,
+                        "priceCurrency": "RUB",
+                        "price": format(offer_price, "f"),
+                        "availability": (
+                            "https://schema.org/InStock"
+                            if selected_variant.stock > 0
+                            else "https://schema.org/OutOfStock"
+                        ),
+                        "itemCondition": "https://schema.org/NewCondition",
+                    },
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "@id": f"{canonical_url}#breadcrumbs",
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": 1,
+                            "name": "Главная",
+                            "item": _absolute_url(reverse('catalog:index')),
+                        },
+                        {
+                            "@type": "ListItem",
+                            "position": 2,
+                            "name": "Каталог",
+                            "item": _absolute_url(reverse('catalog:catalog')),
+                        },
+                        {
+                            "@type": "ListItem",
+                            "position": 3,
+                            "name": product.category.name,
+                            "item": _absolute_url(
+                                reverse(
+                                    'catalog:catalog_by_category',
+                                    kwargs={'category_slug': product.category.slug},
+                                )
+                            ),
+                        },
+                        {
+                            "@type": "ListItem",
+                            "position": 4,
+                            "name": product.name,
+                            "item": canonical_url,
+                        },
+                    ],
+                },
+            ],
+        }
+        product_json_ld = json.dumps(product_schema, ensure_ascii=False)
+
     context = {
         'product': product,
         'variants': variants,
@@ -291,6 +412,11 @@ def product_detail(request, product_slug):
         'main_image': main_image,
         'attributes': attributes,
         'related_products': related_products,
+        'meta_description': meta_description,
+        'canonical_url': canonical_url,
+        'og_title': f"{product.name} - SofaArt",
+        'og_image': og_image,
+        'product_json_ld': product_json_ld,
     }
 
     return render(request, 'catalog/product_detail.html', context)

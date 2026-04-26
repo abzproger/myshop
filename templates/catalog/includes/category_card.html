@@ -1,0 +1,27 @@
+<article class="category-tile card border-0 h-100 overflow-hidden">
+    <a href="{% url 'catalog:catalog_by_category' category.slug %}" class="category-tile__link text-decoration-none">
+        {% if category.image %}
+        <img
+            src="{{ category.image.url }}"
+            class="category-tile__image"
+            alt="{{ category.name }}"
+            loading="lazy"
+            decoding="async"
+        >
+        {% else %}
+        <div class="category-tile__image category-tile__image--placeholder">
+            <i class="bi bi-grid-1x2 text-white"></i>
+        </div>
+        {% endif %}
+
+        <div class="card-body d-flex flex-column">
+            <div class="category-tile__content">
+                <h3 class="category-tile__title h6 mb-1">{{ category.name }}</h3>
+                <div class="category-tile__cta">
+                    Смотреть товары
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>

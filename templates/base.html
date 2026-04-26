@@ -4,7 +4,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SOFAART — интернет-магазин мебели{% endblock %}</title>
+    <title>{% block title %}SofaArt — интернет-магазин мебели{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ meta_description|default:site_description }}{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}{{ meta_robots|default:'index, follow' }}{% endblock %}">
+    <link rel="canonical" href="{% block canonical_url %}{{ canonical_url }}{% endblock %}">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="{{ site_name }}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{{ og_title|default:'SofaArt — интернет-магазин мебели' }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ meta_description|default:site_description }}{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ canonical_url }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ og_image|default:site_default_image }}{% endblock %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ og_title|default:'SofaArt — интернет-магазин мебели' }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ meta_description|default:site_description }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ og_image|default:site_default_image }}{% endblock %}">
+    {% block seo_preload %}{% endblock %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": "{{ site_url }}/#organization",
+                "name": "SofaArt",
+                "url": "{{ site_url }}/",
+                "email": "info@sofaart.ru",
+                "telephone": "+7-999-123-45-67",
+                "areaServed": "RU"
+            },
+            {
+                "@type": "WebSite",
+                "@id": "{{ site_url }}/#website",
+                "url": "{{ site_url }}/",
+                "name": "SofaArt",
+                "publisher": {
+                    "@id": "{{ site_url }}/#organization"
+                },
+                "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "{{ site_url }}{% url 'catalog:catalog' %}?search={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                }
+            }
+        ]
+    }
+    </script>
+    {% block structured_data %}{% endblock %}
     
     <!-- Bootstrap 5 (локально, чтобы стили работали без CDN) -->
     <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
@@ -37,7 +83,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{% url 'catalog:index' %}">
-                <i class="bi bi-shop"></i> SOFAART
+                <i class="bi bi-shop"></i> SofaArt
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -141,7 +187,7 @@
             </div>
             <hr class="my-3">
             <div class="text-center">
-                <p class="mb-0">&copy; 2024 SOFAART. Все права защищены.</p>
+                <p class="mb-0">&copy; 2024 SofaArt. Все права защищены.</p>
             </div>
         </div>
     </footer>
@@ -170,6 +216,34 @@
         document.addEventListener('DOMContentLoaded', function () {
             const csrftoken = getCookie('csrftoken');
             const cartUrl = "{% url 'cart:detail' %}";
+
+            document.querySelectorAll('.js-product-card').forEach(function (card) {
+                card.addEventListener('click', function (e) {
+                    if (e.target.closest('button, form, input, a, label')) {
+                        return;
+                    }
+
+                    const url = card.dataset.url;
+                    if (url) {
+                        window.location.href = url;
+                    }
+                });
+
+                card.addEventListener('keydown', function (e) {
+                    if (e.key !== 'Enter' && e.key !== ' ') {
+                        return;
+                    }
+                    if (e.target.closest('button, form, input, a, label')) {
+                        return;
+                    }
+
+                    e.preventDefault();
+                    const url = card.dataset.url;
+                    if (url) {
+                        window.location.href = url;
+                    }
+                });
+            });
 
             document.querySelectorAll('.js-add-to-cart-form').forEach(function (form) {
                 const button = form.querySelector('.js-add-to-cart-button');
@@ -207,7 +281,16 @@
 
                         // Меняем состояние кнопки на "В корзине (перейти)"
                         button.dataset.inCart = '1';
-                        button.innerHTML = '<i class="bi bi-cart-check"></i> В корзине (перейти)';
+                        button.classList.remove('shop-btn--secondary');
+                        button.classList.add('shop-btn--in-cart');
+                        const addedLabel = button.dataset.addedLabel || 'В корзине (перейти)';
+                        if (button.dataset.compact === '1') {
+                            button.innerHTML = '<i class="bi bi-cart-check"></i><span class="shop-product-card__action-text">' + addedLabel + '</span><span class="visually-hidden">' + addedLabel + '</span>';
+                        } else {
+                            button.innerHTML = '<i class="bi bi-cart-check"></i> ' + addedLabel;
+                        }
+                        button.setAttribute('aria-label', addedLabel);
+                        button.setAttribute('title', addedLabel);
                     })
                     .catch(function (err) {
                         console.error('Ошибка добавления в корзину:', err);

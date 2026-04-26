@@ -126,3 +126,21 @@ class CheckoutAddressForm(forms.Form):
         return cleaned_data
 
 
+class OrderCancelForm(forms.Form):
+    reason = forms.ChoiceField(
+        label="Причина отмены",
+        choices=(),
+        widget=forms.RadioSelect,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["reason"].choices = self._get_reason_choices()
+
+    @staticmethod
+    def _get_reason_choices():
+        from .models import Order
+
+        return Order.CANCEL_REASON_CHOICES
+
+
